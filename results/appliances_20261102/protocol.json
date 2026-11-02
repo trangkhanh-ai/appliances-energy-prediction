@@ -1,0 +1,87 @@
+{
+  "created_utc": "2026-11-02T15:59:23.693521+00:00",
+  "dataset_sha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+  "boundaries": [
+    "2016-01-11 17:00",
+    "2016-04-11",
+    "2016-04-25",
+    "2016-05-09",
+    "2016-05-27 18:10"
+  ],
+  "split_rows": {
+    "train": 11988,
+    "validation": 2010,
+    "calibration": 2010,
+    "test": 2695
+  },
+  "folds": [
+    [
+      "2016-02-15",
+      "2016-03-01"
+    ],
+    [
+      "2016-03-01",
+      "2016-03-15"
+    ],
+    [
+      "2016-03-15",
+      "2016-04-11"
+    ]
+  ],
+  "horizons_minutes": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60
+  ],
+  "seed": 42,
+  "candidates": [
+    {
+      "name": "ridge_1",
+      "family": "ridge",
+      "alpha": 1.0
+    },
+    {
+      "name": "ridge_100",
+      "family": "ridge",
+      "alpha": 100.0
+    },
+    {
+      "name": "hgb_15",
+      "family": "hgb",
+      "leaves": 15
+    },
+    {
+      "name": "hgb_31",
+      "family": "hgb",
+      "leaves": 31
+    },
+    {
+      "name": "xgb_3",
+      "family": "xgb",
+      "depth": 3
+    },
+    {
+      "name": "xgb_5",
+      "family": "xgb",
+      "depth": 5
+    }
+  ],
+  "groups": [
+    "G0",
+    "G1"
+  ],
+  "selection": "Best OOF hourly MAE per family/group; among six winners choose lowest validation hourly MAE",
+  "calibration": "Separate CAL, nonnegative CQR-style widening, nominal 80%; dependent time series, no guarantee",
+  "threshold": "95th percentile of TRAIN actual next-hour energy, research only",
+  "weather": "excluded because upstream interpolation and availability are not certified",
+  "G1": "18 indoor/outdoor house sensor fields and lights, lagged one completed interval",
+  "python": "3.14.3",
+  "sklearn": "1.8.0",
+  "device": "cuda",
+  "test_used_for_selection": false,
+  "savings_measured": false,
+  "human_acceptance": "pending"
+}

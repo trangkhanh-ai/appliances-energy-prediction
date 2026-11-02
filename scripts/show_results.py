@@ -1,8 +1,12 @@
-"""Xem đáp án cố định và kiểm checksum, không train/notebook."""
-import json
-from pathlib import Path
-from src.steel.frozen_results import read_results
+"""Read locked measurements without training a model."""
 
-if __name__ == '__main__':
-    summary = read_results(Path(__file__).resolve().parents[1])
-    print(json.dumps(summary, ensure_ascii=False, indent=2))
+import json
+from src.appliances.config import ROOT, RELEASE
+from src.appliances.data import sha256
+
+if __name__ == "__main__":
+    lock = json.loads((RELEASE / "results_lock.json").read_text(encoding="utf-8"))
+    for path, digest in lock.items():
+        if sha256(ROOT / path) != digest:
+            raise ValueError(f"Changed result {path}")
+    print((RELEASE / "summary.json").read_text(encoding="utf-8"))

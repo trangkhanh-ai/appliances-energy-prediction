@@ -1,0 +1,113 @@
+{
+  "cpu": {
+    "timing": {
+      "fit_seconds": 7.398696199990809,
+      "devices": [
+        "cpu",
+        "cpu",
+        "cpu",
+        "cpu",
+        "cpu",
+        "cpu"
+      ]
+    },
+    "validation": {
+      "rows": 2010,
+      "mae_step_kWh": 0.03466365318453776,
+      "rmse_step_kWh": 0.08418001661809367,
+      "mae_hour_kWh": 0.16780066100052043,
+      "rmse_hour_kWh": 0.35539903607583084,
+      "bias_hour_kWh": -0.07976750771908915,
+      "high_rows": 104,
+      "high_mae_hour_kWh": 1.1359494446418608,
+      "horizons": [
+        {
+          "minutes": 10,
+          "mae_kWh": 0.024488616123276564,
+          "rmse_kWh": 0.06438109713427138
+        },
+        {
+          "minutes": 20,
+          "mae_kWh": 0.03235334609100475,
+          "rmse_kWh": 0.08408839774736794
+        },
+        {
+          "minutes": 30,
+          "mae_kWh": 0.035552653332551316,
+          "rmse_kWh": 0.08727914160056825
+        },
+        {
+          "minutes": 40,
+          "mae_kWh": 0.037367475752732644,
+          "rmse_kWh": 0.08913469762559807
+        },
+        {
+          "minutes": 50,
+          "mae_kWh": 0.03841689400070935,
+          "rmse_kWh": 0.08990134012401839
+        },
+        {
+          "minutes": 60,
+          "mae_kWh": 0.03980293380695196,
+          "rmse_kWh": 0.09029542547673794
+        }
+      ]
+    }
+  },
+  "cuda": {
+    "timing": {
+      "fit_seconds": 7.469101399998181,
+      "devices": [
+        "cuda:0",
+        "cuda:0",
+        "cuda:0",
+        "cuda:0",
+        "cuda:0",
+        "cuda:0"
+      ]
+    },
+    "validation": {
+      "rows": 2010,
+      "mae_step_kWh": 0.03466365348756511,
+      "rmse_step_kWh": 0.08418001622841809,
+      "mae_hour_kWh": 0.16780066222931023,
+      "rmse_hour_kWh": 0.3553990326567513,
+      "bias_hour_kWh": -0.0797675007670673,
+      "high_rows": 104,
+      "high_mae_hour_kWh": 1.1359494301705408,
+      "horizons": [
+        {
+          "minutes": 10,
+          "mae_kWh": 0.02448861613810359,
+          "rmse_kWh": 0.06438109697214645
+        },
+        {
+          "minutes": 20,
+          "mae_kWh": 0.03235334634491757,
+          "rmse_kWh": 0.08408839743367688
+        },
+        {
+          "minutes": 30,
+          "mae_kWh": 0.03555265312867971,
+          "rmse_kWh": 0.08727914103336955
+        },
+        {
+          "minutes": 40,
+          "mae_kWh": 0.037367476080780594,
+          "rmse_kWh": 0.08913469730165124
+        },
+        {
+          "minutes": 50,
+          "mae_kWh": 0.038416895425957234,
+          "rmse_kWh": 0.08990133910099182
+        },
+        {
+          "minutes": 60,
+          "mae_kWh": 0.03980293380695196,
+          "rmse_kWh": 0.09029542552867237
+        }
+      ]
+    }
+  },
+  "scope": "One paired measurement, same data and configuration, includes fit only; does not measure electrical energy or rental cost"
+}

@@ -1,2 +1,0 @@
-# Compatibility entry point for Huy's demo environment.
--r requirements.txt

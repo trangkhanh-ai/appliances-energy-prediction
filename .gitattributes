@@ -1,24 +1,10 @@
-# Preserve the official CSV byte-for-byte so its SHA-256 stays verifiable.
-data/steel/raw/Steel_industry_data.csv -text -diff
-*.joblib -text -diff
+* text=auto eol=lf
 *.py text eol=lf
-*.md text eol=lf
-*.ipynb text eol=lf
 *.json text eol=lf
-*.txt text eol=lf
-*.html text eol=lf
-*.js text eol=lf
-*.css text eol=lf
-*.ps1 text eol=lf
-*.yml text eol=lf
-.gitattributes text eol=lf
-.gitignore text eol=lf
-
-# A frozen manifest hashes the exact protocol bytes, including original newlines.
-reports/steel/release_*/protocol.json -text
-reports/steel/release_*/*_predictions.csv -text
-
-# New frozen evidence is byte-identical on Windows and Linux (checksum reader).
-reports/steel/release_2026-10-16/** -text whitespace=cr-at-eol
-reports/steel/improvements_2026-10-16/** -text whitespace=cr-at-eol
-reports/steel/error_analysis_2026-10-16/** -text whitespace=cr-at-eol
+*.csv -text
+*.joblib binary
+*.png binary
+data/** -text
+results/** -text
+artifacts/** -text
+notebooks/** -text

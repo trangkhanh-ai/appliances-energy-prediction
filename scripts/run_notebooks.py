@@ -1,68 +1,58 @@
-"""Execute every public notebook with this Python; save results in a fresh folder.
+"""Execute and retain notebook outputs with the current Python environment."""
 
-Requires requirements-notebooks.txt. Does not overwrite source notebooks/models.
-"""
-import argparse
-import hashlib
 import json
-import os
-from pathlib import Path
+import subprocess
 import sys
-import tempfile
-
+from pathlib import Path
 import nbformat
 from nbclient import NotebookClient
-from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client import AsyncKernelManager
-
-ROOT = Path(__file__).resolve().parents[1]
+from src.appliances.config import ROOT
+from src.appliances.data import write_json
 
 
-def run(output):
-    output.mkdir(parents=True, exist_ok=False)
-    artifacts = [ROOT / 'data/steel/raw/Steel_industry_data.csv',
-                 *ROOT.glob('reports/steel/**/models/*.joblib'),
-                 *ROOT.glob('reports/steel/release_*/forecast_bundle.joblib'),
-                 *ROOT.glob('reports/steel/release_*/locked_policy.json'),
-                 *ROOT.glob('notebooks/artifacts/*')]
-    before = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-              for p in artifacts if p.is_file() and p.suffix != '.md'}
-    os.environ['OMP_NUM_THREADS'] = '1'
-    os.environ['OPENBLAS_NUM_THREADS'] = '1'
-    os.environ['MPLBACKEND'] = 'Agg'
-    results = []
-    with tempfile.TemporaryDirectory(prefix='steel-kernel-') as temp:
-        kernel = Path(temp) / 'steel-check'
-        kernel.mkdir()
-        (kernel / 'kernel.json').write_text(json.dumps({
-            'argv': [sys.executable, '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
-            'display_name': 'Steel verification', 'language': 'python'}), encoding='utf-8')
-        manager = KernelSpecManager(kernel_dirs=[temp])
-        class LocalKernelManager(AsyncKernelManager):
-            def __init__(self, **kwargs):
-                super().__init__(kernel_spec_manager=manager, **kwargs)
+def run_notebooks():
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "ipykernel",
+            "install",
+            "--user",
+            "--name",
+            "appliances-project",
+            "--display-name",
+            "Appliances project",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    records = []
+    for path in sorted((ROOT / "notebooks").glob("*.ipynb")):
+        notebook = nbformat.read(path, as_version=4)
+        NotebookClient(
+            notebook,
+            timeout=900,
+            kernel_name="appliances-project",
+            resources={"metadata": {"path": str(ROOT)}},
+        ).execute()
+        nbformat.write(notebook, path)
+        counts = [c.execution_count for c in notebook.cells if c.cell_type == "code"]
+        records.append(
+            {
+                "notebook": path.name,
+                "code_cells": len(counts),
+                "executed": all(n is not None for n in counts),
+                "errors": sum(
+                    o.output_type == "error"
+                    for c in notebook.cells
+                    if c.cell_type == "code"
+                    for o in c.get("outputs", [])
+                ),
+            }
+        )
+        print(json.dumps(records[-1]), flush=True)
+    write_json(ROOT / "outputs/appliances_20261102/notebook_verification.json", records)
 
-        for path in sorted((ROOT / 'notebooks').glob('*.ipynb')):
-            book = nbformat.read(path, as_version=4)
-            client = NotebookClient(book, timeout=180, kernel_name='steel-check',
-                                    kernel_manager_class=LocalKernelManager,
-                                    resources={'metadata': {'path': str(ROOT)}})
-            client.execute()
-            nbformat.write(book, output / path.name)
-            results.append({'notebook': path.name, 'passed': True,
-                            'code_cells': sum(c.cell_type == 'code' for c in book.cells)})
-            print('PASS', path.name, flush=True)
-    after = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in before}
-    if before != after:
-        raise AssertionError('Notebook changed a frozen input artifact')
-    summary = {'passed': True, 'python': sys.version.split()[0], 'notebooks': results,
-               'frozen_artifacts_unchanged': True}
-    (output / 'verification.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
-    return summary
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output-dir', type=Path, required=True)
-    args = parser.parse_args()
-    run(args.output_dir.resolve())
+if __name__ == "__main__":
+    run_notebooks()

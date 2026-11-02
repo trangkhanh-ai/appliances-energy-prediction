@@ -1,0 +1,6 @@
+{
+  "calibration_mae_kWh": 0.15186255344192484,
+  "calibration_coverage": 0.8009950248756219,
+  "window_rows": 144,
+  "rule": "Review after two consecutive nonoverlapping daily windows with MAE > 1.5x CAL or coverage < CAL - .1; heuristic"
+}

@@ -1,9 +1,0 @@
-{
-  "passed": true,
-  "all_calibration_test_metrics_match_previous": true,
-  "calibration_predictions_exact_match": true,
-  "test_predictions_exact_match": true,
-  "source_csv_unchanged": true,
-  "model_sha256": "3de06129bd2a04a940516d6e08816df0687dfe4e56ca80eb7600fbf2c812f66e",
-  "source_sha256": "9b1cee6f9cb9cd9df2b95814ca90a9a2ff15b7f5f1fba0fae3c643e82072eacc"
-}

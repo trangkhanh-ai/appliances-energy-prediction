@@ -1,2 +1,0 @@
-# Optional browser verification only; the demo itself does not require Playwright.
-playwright==1.63.0

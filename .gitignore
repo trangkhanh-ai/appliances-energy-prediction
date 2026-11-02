@@ -1,54 +1,14 @@
 .venv/
 .venv-*/
-venv/
 __pycache__/
 *.py[cod]
-*.log
-.pytest_cache/
 .ipynb_checkpoints/
-.env
-.env.*
-!.env.example
-reports/steel/modeling/**/*.joblib
-reports/steel/modeling/**/*.sqlite3*
-
-# Reproducible local model runs, logs, metrics and browser screenshots.
-reports/steel/modeling/
-
-# Operator sessions belong to the local machine, not the source delivery.
-reports/steel/**/demo_sessions/
-*.sqlite3
-*.sqlite3-wal
-*.sqlite3-shm
-# Generated local previews and archives are not published.
-outputs/**/rendered/
-outputs/**/render/
-outputs/**/export_pdf.ps1
-outputs/**/*.zip
-outputs/**/package_check/
-
-# Local exports and academic deliverables are intentionally not published.
 outputs/
+*.sqlite3*
+*.log
 *.docx
 *.pdf
-*.ppt
-*.pptx
-*.tex
 *.zip
-docs/final_report_content.md
-docs/references/
-requirements-report.txt
-scripts/build_ieee_report.py
-# New exploratory runs: promote selected results explicitly after review.
-reports/steel/local_*/
-
-# Previous local academic-deliverable run; release evidence is under release_*.
-reports/steel/final_*/
-
-# Public delivery: code, experiment artifacts, notebooks and one README.
-docs/
-**/*.md
-!/README.md
-notebooks/archive/
-reports/steel/duy_2026-10-02/demo_browser_check/
-reports/steel/figures/extendedFeats/
+.env*
+results/local_*/
+artifacts/local_*/

@@ -1,8 +1,0 @@
-{
-  "passed": true,
-  "comparison": "Every prediction and actual column in validation/calibration/test",
-  "absolute_tolerance": 1e-10,
-  "selected_method": "hgb",
-  "model_refitted_in_separate_folder": true,
-  "published_model_unchanged": true
-}

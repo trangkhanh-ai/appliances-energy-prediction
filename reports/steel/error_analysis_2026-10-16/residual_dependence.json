@@ -1,8 +1,0 @@
-{
-  "overlapping_15m_lag1_acf": 0.7186779790294175,
-  "nonoverlap_hourly_lag1_acf": 0.08985218766604067,
-  "train_actual_p50_kWh": 21.380000000000003,
-  "train_actual_p95_kWh": 379.7710000000002,
-  "conditional_groups_known_at_inference": false,
-  "note": "Overlapping labels and temporal dependence; no physical failure cause inferred"
-}

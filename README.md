@@ -1,329 +1,163 @@
-# Steel Energy Forecasting
+# Dự báo điện năng thiết bị với UCI Appliances
 
-### Dự báo điện năng ngành thép · Đồ án Ứng dụng AI trong Công nghiệp
+Giải pháp dự báo sáu khoảng **10–60 phút** tiếp theo và hỗ trợ người sử dụng xem xét mức tiêu thụ cao. Đồ án học phần **Ứng dụng AI trong công nghiệp**, dùng dataset tòa nhà được giảng viên gợi ý.
 
-[![Checks](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml/badge.svg)](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml)
-![Python](https://img.shields.io/badge/Python-3.14-2563eb)
-![Task](https://img.shields.io/badge/Task-Time%20Series%20Forecasting-0f766e)
-![Data](https://img.shields.io/badge/Data-UCI%20Steel-f59e0b)
-![Demo](https://img.shields.io/badge/Demo-Local%20Replay-64748b)
+![Quy trình](results/appliances_20261102/figures/09_architecture.png)
 
-**Dự báo bốn khoảng điện năng 15 phút trong giờ tiếp theo, ước lượng P10/P50/P90 và hỗ trợ người điều độ kiểm tra các khoảng tiêu thụ cao.** Input chỉ dùng thông tin đã có tại thời điểm dự báo. Đầu ra là **kWh**, chưa chứng minh tránh vượt công suất đỉnh **kW** hoặc tiết kiệm tiền điện.
+## Kết quả đã chạy
 
-[Chạy demo](#chạy-demo) · [Dữ liệu](#dữ-liệu-và-tiền-xử-lý) · [Kết quả](#kết-quả-bản-chính) · [Notebook](#notebook-học-và-chạy-thử) · [Đọc code](#bản-đồ-source-code) · [Nguồn](#nguồn-và-tham-khảo)
+Phiên bản này dùng **Appliances**, thay thế nội dung Steel ở phiên bản trước. Các kết quả dưới đây được tính từ số đo nguồn, chưa đo điện hoặc tiền tiết kiệm sau can thiệp.
 
-![Dashboard bốn bước và phân vị từ CSV thật](assets/demo.png)
+| Hạng mục | Kết quả TEST |
+|---|---:|
+| Phương án chọn bằng OOF và validation | G1 XGBoost, depth 3 |
+| Đặc trưng | 38 |
+| MAE mỗi khoảng 10 phút, trung bình sáu chân trời | 0,030932 kWh |
+| MAE tổng giờ tới | 0,150373 kWh |
+| RMSE tổng giờ tới | 0,318112 kWh |
+| MAE tổng giờ ở nhóm tiêu thụ cao | 1,125947 kWh |
+| Coverage khoảng dự báo toàn TEST | 78,48% |
+| Coverage riêng nhóm cao | 51,28% |
+| Precision / recall cảnh báo | 22,11% / 76,92% |
+| TP / FP / FN / TN theo origin | 90 / 317 / 27 / 2.261 |
 
-## Bài toán và đầu ra
+**Cảnh báo còn nhiều lần nhầm và nhóm cao còn yếu.** Đầu ra hỗ trợ người sử dụng kiểm tra và phản hồi. Kết quả không đủ cho tự động cắt điện hay chứng minh tiết kiệm thực tế.
 
-- **Người dùng:** người phụ trách năng lượng/điều độ, mô phỏng trong đồ án.
-- **Input tại t:** 673 số đo liên tiếp kết thúc ở t, tạo 15 lag/rolling/calendar feature.
-- **Dự báo điểm:** Usage tại t+15, t+30, t+45, t+60 phút, đơn vị kWh mỗi bản đo.
-- **Phân vị:** P10/P50/P90 của tổng bốn khoảng và của khoảng có điện năng lớn nhất; huấn luyện riêng hai nhãn.
-- **Cảnh báo nghiên cứu:** biên trên sau calibration vượt p95 TRAIN; không phải ngưỡng hợp đồng điện.
-- **Quyết định:** người xem kiểm tra thông tin vận hành nếu có, ghi nhận thao tác/lý do; demo không gửi lệnh thiết bị.
-- **Monitoring:** actual đến từng 15 phút, MAE/độ phủ từ nhãn đã đủ, quality gate và nhật ký trong SQLite.
+![Mô hình](results/appliances_20261102/figures/04_models.png)
 
-![Các bước đang triển khai](assets/pipeline.png)
+## Chạy nhanh trên Windows
 
-## Chạy demo
-
-**Môi trường đã kiểm: Python 3.14.3, scikit-learn 1.8.0.** Chạy tại gốc repo. CSV, model và cấu hình đã có sẵn; không cần train để mở demo.
-
-### Windows · PowerShell
+Dùng Python **3.14** để đọc gói mô hình trong môi trường đã kiểm nghiệm. Mở PowerShell ở thư mục chứa README.
 
 ```powershell
-git clone https://github.com/trangkhanh-ai/steel-industry-energy-consumption.git
-cd steel-industry-energy-consumption
 python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python -m scripts.check_steel_demo_environment
-.venv\Scripts\python -X utf8 -m scripts.serve_steel_demo --port 8765 --policy reports/steel/release_2026-10-11/locked_policy.json
-```
-
-Mở **http://127.0.0.1:8765**:
-
-1. Chọn mốc tháng 11–12/2018, ví dụ **01/11/2018 08:00**.
-2. Mở phiên, xem bốn dự báo và phân vị. Actual ban đầu là `—`.
-3. Tiến từng 15 phút; sau bốn bước mới đủ actual tổng giờ.
-4. Xem cảnh báo, ghi tên/ghi chú và chọn thao tác kiểm tra.
-5. Xem MAE/độ phủ phiên; mở metric đầy đủ khi cần. Dừng bằng `Ctrl+C`.
-
-Hoặc `powershell -File scripts/start_steel_demo.ps1`. Linux/macOS thay `.venv\Scripts\python` bằng `.venv/bin/python`.
-
-Backend HTTP Python chuẩn; UI HTML/CSS/JavaScript. Không cần Streamlit, Node, MongoDB, Notion hoặc cloud. Server loopback, chạy tuần tự và một phiên chung, chưa phải hệ thống nhà máy nhiều người dùng.
-
-### Hai phiên bản và nghiên cứu Khánh
-
-| Phần | Artifact | Vai trò |
-|---|---|---|
-| **Bản chính 16/10** | `reports/steel/release_2026-10-16/forecast_bundle.joblib` | 4 HGB point + 6 HGB quantile; manifest kiểm hash/source/version |
-| Đối chứng tổng giờ 11/10 | `reports/steel/duy_2026-10-02/models/hgb_31_leaves.joblib` | Một dự báo tổng giờ, policy ở `release_2026-10-11/locked_policy.json` |
-| Nghiên cứu Khánh | `notebooks/artifacts/`, `khanh_gate7_2026-10-11/` | LightGBM lịch sử và ablation validation; không gắn policy này cho HGB |
-
-UI đặt bản mới ở phần chính, ghi nhãn đối chứng cho bản cũ. Buffer cũ không phải P90. Chạy riêng demo cũ bằng cách thêm `--legacy` vào lệnh server. Notebook không ghi đè model/policy.
-
-### Kịch bản demo 3 phút từ dữ liệu thật
-
-1. **0:00–0:40:** mở phiên `22/11/2018 08:15`. Giải thích bốn dự báo điểm, P50 tổng giờ riêng và dải sau calibration. Actual chưa đến hiển thị `—`.
-2. **0:40–1:20:** chỉ ra biên trên khoảng **413,41 kWh** vượt ngưỡng nghiên cứu **379,771 kWh**. Nhập tên tự khai/lý do và chọn **Đề nghị kiểm tra**; đây là ghi nhận, không gửi lệnh đến máy.
-3. **1:20–2:15:** tiến bốn bước 15 phút, giữ lựa chọn dự báo phát lúc 08:15. Actual đến lần lượt **101,48 / 120,67 / 124,49 / 139,61 kWh**; đến 09:15 mới đủ tổng **486,25 kWh**. Tổng bốn dự báo đã lưu vẫn **286,20 kWh**. Cảnh báo đúng nhưng actual ngoài dải.
-4. **2:15–3:00:** xem nhật ký và giám sát. Phiên ngắn chưa đủ 1.344 nhãn, không thể kết luận model ổn định. Ca bổ sung: **16/11 19:30** bỏ sót; **01/11 08:00** báo giả. Không gọi ca 22/11 08:15 là FN của bản mới.
-
-CSV → RAM → model → dashboard → ghi nhận/SQLite; log mặc định ở `reports/steel/modeling/demo_sessions/<session>/monitor.sqlite3`. Reset mở phiên mới, không mang nhãn đã biết sang. Có thể chọn nơi lưu khác bằng `--sessions-dir`. Không commit nhật ký người dùng.
-
-### Kiểm giám sát hai tuần trên máy riêng
-
-Không cần train lại. Lệnh dưới phát lại 1.440 bước từ dữ liệu thật, kiểm mốc 1.343/1.344 nhãn, tính lại reference từ calibration tháng 10, đối chiếu MAE/độ phủ hai tuần và kiểm nhãn đứt nhịp bằng cách giữ lại một bản ghi khỏi đầu vào kiểm thử.
-
-```powershell
-.venv\Scripts\python -X utf8 -m scripts.check_steel_monitoring --output-dir ..\steel-monitoring-check-01
-```
-
-Chọn thư mục output mới, ngoài các bản release. `monitoring.json` lưu kết luận; `profile.txt` và `timings.json` đo backend, không thay độ trễ trình duyệt. **Chưa đủ nhãn**, **nhãn đứt nhịp** và **chưa chạm ngưỡng rà soát** là ba trạng thái khác nhau. Hai cửa sổ 672 nhãn dùng mức tham chiếu CAL; PSI dùng phân bố TRAIN. Không trạng thái nào xác nhận thiết bị an toàn, tự retrain hoặc tự điều khiển.
-
-## Dữ liệu và tiền xử lý
-
-[UCI Steel Industry Energy Consumption](https://archive.ics.uci.edu/dataset/851/steel+industry+energy+consumption): **35.040 hàng × 11 cột**, năm 2018, một cơ sở thép tại Hàn Quốc, không đại diện toàn khu công nghiệp. CSV giữ nguyên byte:
-
-```text
-data/steel/raw/Steel_industry_data.csv
-SHA-256: 9b1cee6f9cb9cd9df2b95814ca90a9a2ff15b7f5f1fba0fae3c643e82072eacc
-```
-
-| Yêu cầu | Xử lý và lý do |
-|---|---|
-| Broken | Parse đúng format, sort 365 lần timestamp lùi trong raw; kiểm lưới 15 phút/trùng/thiếu |
-| Bad Quality | Giữ một bản ghi zero và đỉnh cao khi chưa chứng minh lỗi sensor; chặn NaN/Inf/âm/gap |
-| Background | Thiếu lịch máy, sản lượng, hợp đồng và giá điện; không tạo dữ liệu để lấp chỗ thiếu |
-| Missing/outlier | Không impute vì CSV không thiếu; không cắt p99 để làm metric đẹp; live thiếu mốc thì từ chối |
-| Feature | Lag 0/1/4/96/672, rolling quá khứ, sin/cos lịch đầu khoảng dự báo; không dùng số đo tương lai |
-| Scaling/selection | StandardScaler chỉ fit TRAIN cho Ridge; HGB không cần scaler; 15 feature cố định |
-| PCA/imbalance | Không PCA/SMOTE: 15 feature dễ giải thích, bài toán hồi quy; giữ tải cao để đánh giá |
-| Leakage | Temporal split, purge origin có nhãn vượt ranh giới; không random split, không fit TEST |
-
-![Chuỗi đo và phân bố điện năng trong TRAIN](assets/data_preview.png)
-
-| Tập | Thời gian | Origin hợp lệ | Vai trò |
-|---|---|---:|---|
-| TRAIN | Tháng 1–8/2018 | 22.652 | Fit model/scaler, ngưỡng nghiên cứu |
-| VALIDATION | Tháng 9/2018 | 2.876 | Chọn phương pháp point |
-| CALIBRATION | Tháng 10/2018 | 2.972 | Hiệu chỉnh biên phân vị |
-| TEST | Tháng 11–12/2018 | 5.852 | Đánh giá hồi cứu |
-
-Nhãn là bốn Usage thật tại t+15/30/45/60; chỉ tạo nhãn offline, inference nhận lịch sử ≤ t. TEST đã từng được nhóm xem, **không phải test mù mới**.
-
-## Kết quả bản chính
-
-Nguồn: [metrics.json](reports/steel/release_2026-10-16/metrics.json), [so sánh](reports/steel/release_2026-10-16/point_model_comparison.csv), [prediction từng origin](reports/steel/release_2026-10-16/test_predictions.csv).
-
-| Phương pháp | MAE 4 bước · validation | MAE 4 bước · test | MAE tổng 4 dự báo · test |
-|---|---:|---:|---:|
-| Last value | 7,3750 | 8,6365 | 31,8140 |
-| Ridge + scaler TRAIN | 9,2207 | 10,1047 | 36,0707 |
-| **HGB** | **4,6080** | **4,8640** | **15,6415** |
-
-Đơn vị kWh. Chọn HGB bằng validation. MAE từng bước: **3,7663 / 4,5518 / 5,2924 / 5,8456 kWh**. Baseline bốn bước khác baseline tổng giờ gần nhất của bản cũ.
-
-![So sánh baseline, Ridge và HGB](assets/model_comparison.png)
-
-| Nhãn phân vị | MAE P50 · kWh | Độ phủ P10–P90 gốc | Độ phủ sau calibration |
-|---|---:|---:|---:|
-| Tổng giờ | 16,0951 | 71,9241% | **78,3322%** |
-| Max interval | 5,5520 | 71,4798% | **79,6651%** |
-
-**P50 là trung vị**, không phải kỳ vọng/trung bình. P10–P90 có mức phủ danh nghĩa 80%; TEST còn dưới 80%. Calibration dùng tháng 10 theo ý tưởng CQR, không nhận bảo đảm conformal cho chuỗi thời gian phụ thuộc. Clip âm/sắp phân vị; ghi crossing và pinball loss trong metrics. Không cộng các phân vị của từng bước để suy ra phân vị tổng.
-
-![Actual và phân vị trên ba ngày TEST đầu — dữ liệu thật](reports/steel/release_2026-10-16/figures/test_quantiles.png)
-
-### Cảnh báo và ba mức đánh giá
-
-Cùng ngưỡng TRAIN **379,771 kWh**, tính theo origin; cửa sổ một giờ chồng lấp, chưa phải sự cố vật lý.
-
-| Chỉ số hồi cứu | HGB tổng giờ cũ + buffer | Quantile tổng giờ mới + calibration |
-|---|---:|---:|
-| Precision | 56,50% | 45,45% |
-| Recall | 63,13% | **86,59%** |
-| Báo giả / bỏ sót | 87 / 66 | 186 / **24** |
-
-- **Model:** MAE/RMSE, pinball loss, coverage, width, crossing.
-- **System:** quality gate, parity, actual trễ, hash/model–policy, FP/FN, latency/tài nguyên.
-- **Industrial:** ưu tiên kiểm tra và lưu lý do; chưa đo tiết kiệm điện/tiền điện hoặc lead time vận hành.
-- Bản mới bỏ sót ít origin hơn nhưng nhiều báo giả hơn; chưa có chi phí vận hành để kết luận tối ưu kinh tế. Episode là nhóm origin liên tiếp, không xác nhận sự kiện tải vật lý.
-- UI đo ngày 16/10: p95 **123.09 ms** trên 24 thao tác Edge; chưa đạt 100 ms. [Log browser](reports/steel/release_2026-10-16/browser_final/browser_check.json). Phiên dài 1.440 bước: backend p95 **125.63 ms**, 1.437 nhãn đã đến, watch model mới hoạt động. Hai phép đo khác phạm vi; không coi là SLA.
-- Max interval vẫn là **kWh, chưa phải peak kW**. Không có P_limit, biểu giá, BESS hoặc tải được phép giảm; không tự điều khiển máy.
-- PSI/sai số là tín hiệu rà soát; chưa tự chẩn đoán nguyên nhân drift hoặc retrain.
-
-## Kiểm chứng và tái tạo
-
-```powershell
-.venv\Scripts\python -m unittest discover -s tests -v
-.venv\Scripts\python -m scripts.check_repository
-.venv\Scripts\python -m scripts.audit_features_and_leakage
-.venv\Scripts\python -m scripts.check_duy_handoff --run-dir reports/steel/duy_2026-10-02
-.venv\Scripts\python -X utf8 -m scripts.check_probabilistic_run --run-dir reports/steel/release_2026-10-16 --output-file reports/steel/local_verification_01.json
-```
-
-Kiểm nhãn CSV, metric/calibration và online–offline parity. **Kiểm local bản publish: 125/125 tests đạt, không skip.** Chọn tên output mới nếu đã có. `check_repository` kiểm cú pháp, notebook, merge marker, link README và file không được publish. Hash kiểm tính toàn vẹn; chỉ nạp Joblib của nguồn nhóm tin cậy.
-
-### Train lại bản chính
-
-```powershell
-$env:OMP_NUM_THREADS = '1'
-$env:OPENBLAS_NUM_THREADS = '1'
-.venv\Scripts\python -X utf8 -m scripts.run_probabilistic_forecast --output-dir reports/steel/local_training_01 --point-loss absolute_error
-.venv\Scripts\python -X utf8 -m scripts.check_probabilistic_run --run-dir reports/steel/local_training_01 --output-file reports/steel/local_training_check_01.json
-.venv\Scripts\python -X utf8 -m scripts.serve_steel_demo --port 8765 --policy reports/steel/release_2026-10-11/locked_policy.json --probabilistic-model-dir reports/steel/local_training_01
-```
-
-4 HGB point + 6 HGB quantile, 180 vòng, 31 lá, loss point `absolute_error`, learning_rate=0,08, L2=1, random_state=42, không early stopping. Protocol ghi trước fit/scoring TEST. Model khác môi trường có thể khác byte/hash: kiểm prediction/metric, không tự gắn policy khác artifact.
-
-Tái tạo model tổng giờ cũ: `python -m scripts.run_duy_pipeline --output-dir reports/steel/local_hourly_01`. Tạo lại ảnh README: `python -m scripts.build_readme_assets`.
-
-## Bản cải tiến ngày 16/10 và đáp án cố định
-
-**Không cần chạy notebook để lấy số báo cáo.** Artifact, prediction từng origin, bảng/biểu đồ và checksum đã lưu trong [release 16/10](reports/steel/release_2026-10-16/results_summary.json). Xem và kiểm toàn bộ đáp án:
-
-```powershell
+.venv\Scripts\python -m pip install -r requirements-notebooks.txt
 .venv\Scripts\python -X utf8 -m scripts.show_results
+.venv\Scripts\python -X utf8 -m scripts.serve_demo --port 8767
 ```
 
-| Chỉ số kWh | Bản 14/10 | Bản 16/10 |
-|---|---:|---:|
-| Walk-forward MAE/bước, 3 tháng | 5,6029 | **5,2802** |
-| Validation tháng 9 MAE/bước | 4,7665 | **4,6080** |
-| TEST MAE/bước | 5,0034 | **4,8640** |
-| TEST MAE tổng giờ | 16,0661 | **15,6415** |
-| TEST RMSE tổng giờ | **31,9771** | 32,5086 |
+Mở **http://127.0.0.1:8767/**. Các mô hình xuất ra dùng CPU khi suy luận. GPU chỉ cần khi chọn train với `--device cuda`.
 
-- Point đổi sang `absolute_error` vì tốt hơn ở cả ba fold và validation. TEST đã được xem từ trước; đây là so sánh hồi cứu. **RMSE tăng**, không kết luận tốt hơn mọi tiêu chí.
-- Thử 8 phương pháp/cấu hình trên cùng 15 feature/4 nhãn: last value, seasonal ngày/tuần, Ridge, HGB gốc, HGB MAE, HGB 15 lá và LightGBM. Trong cấu hình đã thử, HGB MAE có pooled MAE tốt nhất; không tuyên bố tối ưu mọi thuật toán.
-- Ablation giữ 15 feature: thêm hai delta không cải thiện nhất quán; bỏ lịch hoặc rolling làm kết quả kém hơn. Xem [bảng ablation](reports/steel/improvements_2026-10-16/feature_ablation.csv).
-- Thử biên trên một phía 90% trên CAL: FN vẫn 24, FP tăng từ 186 lên 187/193. **Giữ calibration cũ**, lưu [kết quả đối chứng](reports/steel/improvements_2026-10-16/calibration_comparison.csv).
-- Nhóm actual cao có 179 origin: coverage chỉ **37,99%**, MAE tổng giờ bản mới **79,9584 kWh**. Đây là phân nhóm offline bằng nhãn; chưa biết nguyên nhân vận hành. [Bảng lỗi](reports/steel/error_analysis_2026-10-16/conditional_errors.csv).
-- Monitoring mới dùng reference CAL tháng 10 và đúng bundle hash; đủ 1.344 nhãn liên tục mới xét hai cửa sổ 7 ngày, MAE > 1,2 lần reference hoặc coverage giảm hơn 10 điểm phần trăm ở cả hai. Đây là heuristic; không tự retrain/điều khiển.
-- Snapshot chỉ giải mã JSON dự báo mới, vẫn đọc/lọc actual theo `as_of`. Profile đã xác nhận chi phí JSON lặp; SQLite WAL/FULL và nhật ký bất biến được giữ. Benchmark local trước/sau có tải nền khác nhau, không quy toàn bộ chênh lệch cho tối ưu cache.
-- [Chi tiết thay đổi và quyết định](reports/steel/release_2026-10-16/changes.json), [kiểm phần mềm](reports/steel/release_2026-10-16/system_verification.json), [khóa kết quả](reports/steel/release_2026-10-16/results_lock.json). Giữ nguyên release 14/10.
+![Giao diện đã chạy](results/appliances_20261102/figures/11_demo.png)
 
-![Walk-forward thực đo](reports/steel/improvements_2026-10-16/walk_forward.png)
-![Phân tích lỗi bản 16/10](reports/steel/error_analysis_2026-10-16/residual_analysis.png)
+- **Tiếp 10 phút** nhận thêm một bản đo rồi phát dự báo mới.
+- **Bắt đầu lại** tạo phiên replay mới.
+- Xem sáu dự báo, tổng giờ, khoảng dự báo và cảnh báo.
+- Nhập tên và phản hồi để lưu nhật ký SQLite trong `outputs/`.
+- Sai số chỉ được chấm khi đủ sáu số đo tương lai.
 
-Tái lập nghiên cứu khi cần (tùy chọn, không cần để đọc đáp án):
+## Dữ liệu và bài toán
+
+- Nguồn chính thức [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction), DOI **10.24432/C5VC8G**, CC BY 4.0.
+- CSV có 19.735 hàng, 29 cột, từ 11/01 đến 27/05/2016, cách nhau 10 phút.
+- Biến cần dự báo là `Appliances`, đơn vị nguồn Wh. `energy_kWh = Appliances / 1000`.
+- `lights` là trường riêng. Dự án dự báo điện năng của biến Appliances, không cộng tùy ý các trường để gọi thành toàn bộ điện năng nhà.
+- Timestamp được giả định là thứ tự của bản đo đã hoàn tất. Múi giờ và quy ước đầu/cuối khoảng đo cần xác minh khi nối công tơ thật.
+- Không có missing, duplicate timestamp hay khoảng gián đoạn trong bản nguồn đã kiểm.
+- Thời tiết trạm được nội suy upstream, chưa xác minh tính sẵn có khi dự báo. Các cột này và `rv1/rv2` được loại khỏi feature chính.
+
+File nguồn giữ nguyên byte với SHA256 `2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d`. `prepare_data` tải lại từ UCI nếu file chưa có, rồi kiểm hash.
+
+## Quy trình thực nghiệm
+
+| Tập | Thời gian | Số origin dùng |
+|---|---|---:|
+| TRAIN | 11/01–10/04/2016 | 11.988 |
+| Validation | 11–24/04/2016 | 2.010 |
+| Calibration | 25/04–08/05/2016 | 2.010 |
+| TEST | 09–27/05/2016 | 2.695 |
+
+Đã loại 1.008 hàng thiếu lịch sử tuần, 6 hàng cuối thiếu nhãn và 18 origin có nhãn đi qua ba ranh giới. Thực nghiệm có ba fold mở rộng nằm trong TRAIN, không shuffle.
+
+- **G0** có 19 feature từ lịch sử điện và lịch thời gian.
+- **G1** thêm 18 cảm biến nhà cùng `lights`, trễ một khoảng hoàn tất, thành 38 feature.
+- Baseline gồm persistence, ngày trước và tuần trước.
+- Ridge dùng scaler fit riêng trong mỗi TRAIN/fold. HGB và XGBoost có hai cấu hình mỗi họ.
+- Có 12 tổ hợp cấu hình/nhóm feature. Lấy cấu hình OOF tốt nhất từng họ/nhóm, sau đó chọn theo MAE tổng giờ validation.
+- TEST được chấm sau khi khóa lựa chọn. Không thay winner dựa vào thứ hạng TEST.
+- Ba HGB quantile riêng học P10/P50/P90 của tổng giờ. Calibration dùng tập CAL và score CQR-style không âm, mức danh nghĩa 80%. Chuỗi thời gian phụ thuộc nên coverage chưa có bảo đảm lý thuyết.
+- Ngưỡng cảnh báo **1,7065 kWh** là p95 tổng giờ trên TRAIN, phục vụ nghiên cứu. Đây không phải công suất hợp đồng.
+- Ablation trên validation và benchmark cùng cấu hình CPU/GPU được lưu riêng. Các chẩn đoán bổ sung không thay mô hình đã chọn.
+
+![Độ tin cậy](results/appliances_20261102/figures/08_high_load.png)
+
+## Đọc code theo thứ tự
+
+| File | Nội dung cần hiểu |
+|---|---|
+| `src/appliances/config.py` | 10 phút, 6 chân trời, 1.009 bản đo lịch sử, split và fold |
+| `src/appliances/data.py` | Kiểm nguồn, schema, phép đo và đổi đơn vị |
+| `src/appliances/features.py` | Tạo X từ quá khứ, Y từ sáu bản đo tương lai |
+| `src/appliances/modeling.py` | Fit Ridge, HGB, XGBoost và quantile |
+| `src/appliances/experiment.py` | Search, chọn model, calibration và lưu kết quả |
+| `src/appliances/metrics.py` | MAE, RMSE, coverage, PR và cảnh báo |
+| `src/appliances/inference.py` | Đọc artifact đã kiểm hash và dự báo từ lịch sử |
+| `src/appliances/demo.py` | Replay, nhãn đến muộn, SQLite và phản hồi |
+| `src/appliances/verification.py` | Đối chiếu nguồn, dự báo và metric |
+| `web/index.html` | Giao diện có biểu đồ, cảnh báo và thao tác người dùng |
+
+Một hàng train gồm **X(t)** và **Y(t)**. X(t) chỉ dùng lịch sử đã quan sát, Y(t) gồm sáu bản đo tương lai để học. Khi demo, chỉ truyền X(t), còn actual được để trống cho đến khi đủ thời gian.
+
+## Notebook đã thực thi và có output
+
+1. `01_data_understanding.ipynb` — nguồn, audit, phân tích 3B và biểu đồ TRAIN.
+2. `02_preprocessing_features.ipynb` — đơn vị, lag/rolling, split và phép tính bằng số đo thật.
+3. `03_models_tuning.ipynb` — fit Ridge thật, kiểm khớp kết quả, full search, ablation và GPU.
+4. `04_evaluation_error_analysis.ipynb` — ba mức đánh giá, khoảng, PR, trường hợp lỗi và kiểm nghiệm độc lập.
+5. `05_demo_monitoring.ipynb` — chạy replay và nhật ký phản hồi trong một phiên thử riêng.
+
+Notebook đọc full-search đã lưu để xem lại mà không phải train GPU. Cell Ridge minh họa huấn luyện thật. Tái chạy toàn bộ search bằng lệnh train phía dưới.
 
 ```powershell
-.venv\Scripts\python -m pip install -r requirements-khanh.txt
-.venv\Scripts\python -X utf8 -m scripts.run_improvement_study --include-lightgbm --output-dir reports/steel/local_study_01
-.venv\Scripts\python -X utf8 -m scripts.benchmark_replay --steps 1440 --output-dir reports/steel/local_benchmark_01
+.venv\Scripts\python -X utf8 -m scripts.run_notebooks
 ```
 
-## Notebook học và chạy thử
-
-Cài `python -m pip install -r requirements-notebooks.txt`, mở bằng VS Code/Jupyter, chọn kernel `.venv`. Không cần notebook dependencies để chạy dashboard.
-
-| Notebook | Nội dung |
-|---|---|
-| [08 · Kết quả cải tiến](notebooks/08_measured_improvements.ipynb) | **Bản hiện tại 16/10:** kết quả có sẵn, walk-forward, ablation, calibration và lỗi |
-| [01 · Data preparation](notebooks/01_data_preparation.ipynb) | 3B, chất lượng, feature/split, EDA TRAIN; dùng hàm source chính |
-| [05 · Four-step forecasting (bản 14/10)](notebooks/05_four_step_quantile_forecasting.ipynb) | Bản 14/10 giữ để đối chiếu: baseline/Ridge/HGB, quantile, prediction, actual trễ |
-| [06 · Warning cases](notebooks/06_warning_case_studies.ipynb) | Ca FN 08:15/TP 09:00 ngày 22/11 Khánh đề xuất; đối chiếu hai bản |
-| [07 · Error analysis](notebooks/07_error_analysis.ipynb) | Đánh giá cũ/mới, ca lỗi thật, kết quả theo tháng và giới hạn công nghiệp |
-| [02 · Hourly evaluation](notebooks/02_steel_modeling_evaluation.ipynb) | Đánh giá tổng giờ cũ 11/10; không ghi lại policy |
-| [03 · Duy hourly study](notebooks/03_duy_steel_data_and_models.ipynb) | Dữ liệu, leaderboard validation và inference tổng giờ cũ |
-| [04 · Khánh study](notebooks/04_khanh_lightgbm_study.ipynb) | LightGBM 15/19 feature, tách khỏi bản chính |
-
-Đã kiểm đủ tám notebook; [biên bản thực thi và số cell chính xác](reports/steel/notebook_verification_2026-10-16.json). Chạy cả tám notebook bằng đúng Python đang dùng, lưu kết quả vào folder mới và kiểm CSV/model/policy bất biến:
+## Kiểm chứng và suy luận
 
 ```powershell
-.venv\Scripts\python -X utf8 -m scripts.run_notebooks --output-dir reports/steel/local_notebook_check_01
+.venv\Scripts\python -X utf8 -m unittest discover -s tests -v
+.venv\Scripts\python -X utf8 -m scripts.verify_results
+.venv\Scripts\python -X utf8 -m scripts.predict --issue-time 2016-05-09T00:00
 ```
 
-### Nghiên cứu Khánh
+Verification kiểm hash artifact, nhãn từng hàng của bốn tập, tái tính metric, kiểm nhân quả bằng thay đổi tương lai trên bản sao và đối chiếu 100 origin suy luận với file dự báo. Đọc CSV dự báo dùng `float_precision='round_trip'` để bảo toàn số thực khi kiểm tra giá trị nằm đúng biên khoảng.
 
-Bốn feature thực: `steel_ramp_rate`, `apparent_energy_proxy`, `reactive_ratio`, `low_lagging_pf_flag`; **không có `load_type_encoded` trong bộ 19**. Proxy điện năng không gọi là công suất biểu kiến; PF thấp không chứng minh bị phạt tiền.
-
-Validation LightGBM MAE **14,558653 → 14,087299 kWh** (giảm khoảng 3,24%). Study dùng nhãn tổng giờ và cửa sổ pandas lịch sử; không so validation của nó với TEST bốn bước như cùng thí nghiệm. Notebook 04 chỉ đọc kết quả. Muốn train study riêng:
+## Train lại
 
 ```powershell
-.venv\Scripts\python -m pip install -r requirements-khanh.txt
-.venv\Scripts\python -m scripts.run_feature_extension --output-dir reports/steel/local_gate7_01
-.venv\Scripts\python -m scripts.check_khanh_lightgbm --output-dir reports/steel/local_lightgbm_check_01
+.venv\Scripts\python -X utf8 -m scripts.train_models --device cuda --output results/local_run --model-dir artifacts/local_run
+.venv\Scripts\python -X utf8 -m scripts.verify_results --output results/local_run --model-dir artifacts/local_run
 ```
 
-## Bản đồ source code
+Dùng `--device cpu` khi train trên máy CPU. Tạo thư mục output mới cho mỗi lần chạy. `device=cuda` được kiểm sau fit, CPU fallback gây lỗi rõ ràng. Sáu mô hình point được lưu trong gói dùng CPU khi demo.
 
-### Phân tích lỗi và độ ổn định trên dữ liệu thật
+## Kết quả cố định nằm ở đâu
 
-```powershell
-.venv\Scripts\python -X utf8 -m scripts.analyze_forecast_errors --output-dir reports/steel/local_error_analysis_01
-```
+- `data/raw/` giữ nguồn.
+- `results/appliances_20261102/processed/` giữ các tập xử lý.
+- `search_metrics.csv`, `search_full.json`, `oof_predictions.csv` giữ search và OOF.
+- `selection.json` ghi lựa chọn trước TEST.
+- `predictions/` giữ số đo, dự báo và khoảng của bốn tập.
+- `metrics.json`, `comparison.csv`, `conditional_errors.csv`, `largest_errors.csv` giữ đánh giá.
+- `figures/` giữ biểu đồ do code tạo.
+- `artifacts/appliances_20261102/` giữ model, manifest và tham chiếu giám sát.
+- `results_lock.json` giữ checksum kết quả. Thư mục `outputs/` giữ session local và tài liệu học thuật.
 
-[Kết quả kiểm lại ngày 15/10](reports/steel/error_analysis_2026-10-16/verification.json) xác nhận nhãn với CSV gốc, tái tính prediction/buffer của đối chứng cũ, kiểm parity online cho bốn ca và đối chiếu với lần train mới. Model và ngưỡng không được chỉnh theo TEST.
+## Giới hạn và liên hệ học phần
 
-- 08:15 ngày 22/11: FN ở bản cũ, **TP ở bản mới**. Actual tổng giờ 486,25 kWh khác Usage tại origin 41,51 kWh.
-- 19:30 ngày 16/11: bản mới vẫn FN, actual tổng giờ 393,05 kWh nhưng biên trên 263,85 kWh.
-- MAE tổng bốn dự báo tháng 11/12: **18,9728 / 12,4134 kWh**; coverage **80,10% / 76,62%**. MAE thấp hơn chưa bảo đảm độ phủ tốt hơn.
-- [Bảng cảnh báo](reports/steel/error_analysis_2026-10-16/alert_comparison.csv), [ca minh họa](reports/steel/error_analysis_2026-10-16/case_studies.csv), [theo tháng](reports/steel/error_analysis_2026-10-16/monthly_metrics.csv). Những ca chọn để giải thích không thay thế metric trên cả TEST.
-- [Phạm vi công nghiệp](reports/steel/error_analysis_2026-10-16/industrial_scope.json): chưa đo điện/tiền tiết kiệm, lead time thiết bị hoặc số lượt kiểm tra thực; không có điều khiển tự động.
+Giải pháp bao phủ tám bước lifecycle. Các phần dữ liệu, model, demo và monitoring có bằng chứng chạy local. Bản dữ liệu chỉ có một ngôi nhà, chưa phủ một năm và thiếu lịch bật/tắt thiết bị, can thiệp, biểu giá cùng ràng buộc vận hành. Các forecast origin có nhãn giờ chồng lấp. Chưa có xác nhận từ nghiệm thu nhóm hoặc máy thứ hai.
 
-![Phân tích cảnh báo với nhãn giờ tới lấy từ CSV thật](reports/steel/error_analysis_2026-10-16/error_cases.png)
+Liên hệ Lee Case Study 4 nằm ở dự báo trước và hỗ trợ quyết định. Mô hình cơ chế thiết bị, tối ưu start-stop và sức khỏe máy cần nguồn dữ liệu khác. Slide 05 và sách Industry 5.0 được dùng để phân tích tích hợp, con người và độ tin cậy.
 
-### Các thư mục và module
+## Tài liệu tham khảo
 
-```text
-src/steel/       Logic xử lý, feature, model, policy, evaluation, monitoring
-scripts/         Lệnh train/audit/notebook/kiểm chứng/server
-tests/           Kiểm dữ liệu, leakage, hash, actual trễ, replay, policy
-web/steel_demo/  HTML / CSS / JavaScript
-notebooks/       Tám notebook; artifact Khánh riêng
-data/steel/      CSV gốc, processed cho đối chứng/nghiên cứu
-reports/steel/   Model, prediction CSV, metric JSON, hình thực nghiệm
-assets/          Ảnh README/dashboard từ dữ liệu và UI thật
-configs/        Cấu hình thí nghiệm cũ để tái lập
-.github/        CI source/tests/artifact
-```
-
-| Đọc theo thứ tự | File và trách nhiệm |
-|---|---|
-| Dữ liệu | [preprocessing.py](src/steel/preprocessing.py): schema/time/quality, nhãn tổng giờ, split/purge |
-| Feature | [duy_forecasting.py](src/steel/duy_forecasting.py): batch; [live_features.py](src/steel/live_features.py): một hàng từ lịch sử |
-| Train mới | [run_probabilistic_forecast.py](scripts/run_probabilistic_forecast.py): baseline/Ridge/HGB, selection, calibration, scoring |
-| Inference/metric | [probabilistic.py](src/steel/probabilistic.py): 4 bước, quantile, manifest, actual trễ |
-| Kiểm kết quả | [check_probabilistic_run.py](scripts/check_probabilistic_run.py): nhãn CSV, metric, parity |
-| Demo/SQLite | [demo.py](src/steel/demo.py), [monitoring.py](src/steel/monitoring.py), [serve_steel_demo.py](scripts/serve_steel_demo.py) |
-| Khánh | [feature_extension.py](src/steel/feature_extension.py), [run_feature_extension.py](scripts/run_feature_extension.py) |
-
-**Lưu trữ thực:** CSV giữ raw, Pandas/NumPy xử lý; SQLite lưu `forecasts`, `requests`, `decisions`, `session_metadata` tại `reports/steel/modeling/demo_sessions/<session>/monitor.sqlite3`. Model lưu Joblib/JSON. Chưa thu trực tiếp từ công tơ/gateway hoặc lưu mọi số đo raw vào SQLite; không cần hệ phân tán cho 35.040 hàng.
-
-## Xử lý lỗi
-
-| Triệu chứng | Cách xử lý |
-|---|---|
-| Thiếu module | Dùng `.venv`, cài đúng requirements; notebook/LightGBM/Playwright có file riêng |
-| Model/source hash sai | Kiểm version/byte; không bỏ quality gate hoặc tắt kiểm hash |
-| Output đã có | Chọn tên mới, giữ bằng chứng cũ |
-| Cổng bận | Đổi `--port 8766`, mở đúng URL |
-| Actual `—` | Tiến từng 15 phút; tổng cần đủ 4 số đo, không điền số giả |
-| CRLF/LF của LightGBM | Kiểm byte thực; test không giả định newline của mọi checkout. LightGBM vẫn không được kích hoạt cho HGB |
-
-Kiểm UI tùy chọn: cài `requirements-ui-test.txt`, có Microsoft Edge, chạy server rồi `python -m scripts.check_steel_demo_browser --url http://127.0.0.1:8765 --output-dir reports/steel/local_browser_01`. Kiểm desktop/mobile, actual trễ/reset/log và đo thao tác thật; inference latency không thay UI latency.
-
-## Nhóm và phạm vi công khai
-
-| Thành viên | Trách nhiệm |
-|---|---|
-| Duy · `dzyuu1612` | Problem/data, preprocessing, baseline/model, tích hợp/rà soát |
-| Khánh | Feature/LightGBM, calibration/evaluation, TP/FN, nghiệm thu độc lập |
-| Huy | Demo, monitoring, đóng gói, chạy kiểm trên máy khác |
-
-Repo chứa code, một README, notebook và artifact/hình cần chạy, đối chiếu kết quả. Word/slide/PDF bài báo, tài liệu `docs/`, Markdown khác và log cá nhân nằm ngoài bản source. Code cũ truy xuất được qua lịch sử Git.
-
-## Nguồn và tham khảo
-
-- **Dữ liệu:** V. E. Sathishkumar, C. Shin, Y. Cho, *Steel Industry Energy Consumption*, UCI, 2021, DOI [10.24432/C52G8C](https://doi.org/10.24432/C52G8C), **CC BY 4.0**. CSV không chỉnh sửa; nhóm tạo feature/split.
-- **HGB/quantile:** [scikit-learn 1.8 API](https://scikit-learn.org/1.8/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html), [prediction intervals chính thức](https://scikit-learn.org/1.8/auto_examples/ensemble/plot_gradient_boosting_quantile.html).
-- **Calibration:** Romano, Patterson, Candès, [Conformalized Quantile Regression](https://arxiv.org/abs/1905.03222), 2019; áp dụng ý tưởng score, công khai giới hạn chuỗi thời gian.
-- **Industrial AI:** Jay Lee, [Industrial AI Applications with Sustainable Performance](https://doi.org/10.1007/978-981-15-2144-7), 2020. Case Study 4 gợi ý nối dự báo với quyết định; không dùng savings của case study làm kết quả nhóm.
-- **Storage:** [SQLite appropriate uses](https://www.sqlite.org/whentouse.html), [WAL](https://www.sqlite.org/wal.html), phục vụ demo local/embedded.
-- **Tổ chức repo/README:** tham khảo [Cookiecutter Data Science](https://github.com/drivendataorg/cookiecutter-data-science), [scikit-learn](https://github.com/scikit-learn/scikit-learn), [LightGBM](https://github.com/lightgbm-org/LightGBM); điều chỉnh cho nhóm ba người, không sao chép kết quả của các repo đó.
-
-**Lifecycle:** Problem Definition → Data Understanding → Data Preparation → Method Selection → Model Development → Evaluation → Deployment → Monitoring and Improvement. Có code/notebook/artifact để đối chiếu; giá trị công nghiệp chưa đo được giữ đúng trạng thái chưa đo.
+1. [UCI Appliances, DOI 10.24432/C5VC8G](https://doi.org/10.24432/C5VC8G).
+2. L. M. Candanedo et al., *Data driven prediction models of energy use of appliances in a low-energy house*, Energy and Buildings 140, 2017, [DOI 10.1016/j.enbuild.2017.01.083](https://doi.org/10.1016/j.enbuild.2017.01.083). [Kho tác giả](https://github.com/LuisM78/Appliances-energy-prediction-data).
+3. [scikit-learn — Lagged features for time series forecasting](https://scikit-learn.org/stable/auto_examples/applications/plot_time_series_lagged_features.html).
+4. T. Chen and C. Guestrin, [XGBoost, KDD 2016](https://arxiv.org/abs/1603.02754). [Tài liệu GPU](https://xgboost.readthedocs.io/en/stable/gpu/).
+5. Y. Romano et al., [Conformalized Quantile Regression, 2019](https://arxiv.org/abs/1905.03222).
+6. J. Lee, [Industrial AI, 2020](https://doi.org/10.1007/978-981-15-2144-7), Case Study 4, pp. 82–88.
+7. J. Soldatos, Ed., [Artificial Intelligence in Manufacturing, 2024](https://doi.org/10.1007/978-3-031-46452-2).
+8. J. Lee et al., [2026 roadmap on AI and ML for smart manufacturing](https://doi.org/10.1088/3049-4761/ae5967).
+9. J. Brownlee, *Deep Learning for Time Series Forecasting*, 2018, ch. 3–4; *Imbalanced Classification with Python*, 2020, ch. 4, 7.
+10. H. T. Lộc, bài giảng 01–05, học phần Ứng dụng AI trong công nghiệp, HUFLIT, 2026.

@@ -1,53 +1,27 @@
-name: Source and forecasting checks
-
+name: Appliances reproducibility
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  core:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
       MPLBACKEND: Agg
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: '3.14'
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - run: python -m scripts.check_repository
-      - run: python -m unittest discover -s tests -v
-      - run: python -m scripts.audit_features_and_leakage
-      - run: python -m scripts.audit_features_and_leakage --processed-dir reports/steel/duy_2026-10-02/processed
-      - run: python -m scripts.check_duy_handoff --run-dir reports/steel/duy_2026-10-02
-      - run: python -m scripts.check_steel_demo_environment
-      - run: python -m scripts.check_probabilistic_run --run-dir reports/steel/release_2026-10-14 --output-file outputs/ci_probabilistic_verification.json
-      - run: python -m scripts.check_probabilistic_run --run-dir reports/steel/release_2026-10-16 --output-file outputs/ci_current_verification.json
-      - run: python -m scripts.show_results
-
-  notebooks:
-    needs: core
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      MPLBACKEND: Agg
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.14"
-          cache: pip
-      - run: python -m pip install -r requirements-notebooks.txt
-      - run: python -m scripts.run_notebooks --output-dir outputs/ci_notebooks
+      - run: python -X utf8 -m unittest discover -s tests -v
+      - run: python -X utf8 -m scripts.verify_results
+      - run: python -X utf8 -m scripts.show_results

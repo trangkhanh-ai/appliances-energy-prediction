@@ -1,5 +1,0 @@
-Feature Set,Model,Val MAE (kWh),Val RMSE (kWh)
-BASE (15 biến),Ridge,34.68,51.6
-BASE (15 biến),LightGBM,14.56,32.0
-EXTENDED (19 biến),Ridge,34.31,51.52
-EXTENDED (19 biến),LightGBM,14.09,31.55
