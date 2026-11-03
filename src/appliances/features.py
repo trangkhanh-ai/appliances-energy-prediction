@@ -2,7 +2,15 @@
 
 import numpy as np
 import pandas as pd
-from .config import FREQUENCY, LAGS, SENSORS, HORIZONS, HISTORY_ROWS, BOUNDARIES, SPLIT_NAMES
+from .config import (
+    FREQUENCY,
+    LAGS,
+    SENSORS,
+    HORIZONS,
+    HISTORY_ROWS,
+    BOUNDARIES,
+    SPLIT_NAMES,
+)
 
 
 def make_features(history):
@@ -29,7 +37,9 @@ def make_features(history):
     ]:
         values = np.full(len(energy), np.nan)
         if len(energy) >= window:
-            windows = np.lib.stride_tricks.sliding_window_view(energy.to_numpy(), window)
+            windows = np.lib.stride_tricks.sliding_window_view(
+                energy.to_numpy(), window
+            )
             values[window - 1 :] = getattr(windows, operation)(axis=1)
         x[name] = values
     x["change_10m"] = energy.diff(1)
@@ -55,17 +65,23 @@ def feature_columns(frame, group):
     if group not in ("G0", "G1"):
         raise ValueError("Feature group must be G0 or G1")
     return [
-        c for c in frame.columns if group == "G1" or not c.endswith("_lag_1") or c == "energy_lag_1"
+        c
+        for c in frame.columns
+        if group == "G1" or not c.endswith("_lag_1") or c == "energy_lag_1"
     ]
 
 
 def supervised(raw):
     x = make_features(raw)
     labels = pd.DataFrame(
-        {f"actual_{m}m_kWh": raw.energy_kWh.shift(-i) for i, m in enumerate(HORIZONS, 1)}
+        {
+            f"actual_{m}m_kWh": raw.energy_kWh.shift(-i)
+            for i, m in enumerate(HORIZONS, 1)
+        }
     )
     rows = pd.concat(
-        [raw[["timestamp"]].reset_index(drop=True), x.reset_index(drop=True), labels], axis=1
+        [raw[["timestamp"]].reset_index(drop=True), x.reset_index(drop=True), labels],
+        axis=1,
     )
     rows["forecast_end"] = rows.timestamp + pd.Timedelta(minutes=60)
     rows["actual_hour_kWh"] = labels.sum(axis=1, min_count=6)
@@ -78,7 +94,9 @@ def split_rows(rows):
     parts = {}
     counts = {}
     for name, start, end in zip(SPLIT_NAMES, BOUNDARIES[:-1], BOUNDARIES[1:]):
-        inside = rows.timestamp.between(pd.Timestamp(start), pd.Timestamp(end), inclusive="left")
+        inside = rows.timestamp.between(
+            pd.Timestamp(start), pd.Timestamp(end), inclusive="left"
+        )
         safe = rows.forecast_end < pd.Timestamp(end)
         part = rows.loc[inside & safe & rows.ready].copy().reset_index(drop=True)
         if part.empty:

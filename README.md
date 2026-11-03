@@ -6,7 +6,7 @@ Giải pháp dự báo sáu khoảng **10–60 phút** tiếp theo và hỗ tr�
 
 ## Kết quả đã chạy
 
-Phiên bản này dùng **Appliances**, thay thế nội dung Steel ở phiên bản trước. Các kết quả dưới đây được tính từ số đo nguồn, chưa đo điện hoặc tiền tiết kiệm sau can thiệp.
+Các kết quả dưới đây được tính từ số đo của **UCI Appliances Energy Prediction**. Dự án dự báo điện năng thiết bị trong một ngôi nhà; chưa đo điện hoặc tiền tiết kiệm sau can thiệp.
 
 | Hạng mục | Kết quả TEST |
 |---|---:|
@@ -83,6 +83,18 @@ File nguồn giữ nguyên byte với SHA256 `2820bf712ad0275cb18b85a05250926100
 
 ## Đọc code theo thứ tự
 
+```text
+data/raw/                 CSV gốc tải từ UCI, kiểm bằng SHA256
+src/appliances/           Xử lý dữ liệu, huấn luyện, đánh giá và suy luận
+scripts/                  Các lệnh chuẩn bị dữ liệu, chạy và kiểm chứng
+notebooks/                Năm bước thực nghiệm có sẵn kết quả
+artifacts/                Mô hình đã huấn luyện và thông tin phiên bản
+results/                  Tập dữ liệu xử lý, dự báo, chỉ số và biểu đồ
+tests/                    Kiểm thử dữ liệu, thời gian và demo
+web/                      Giao diện chạy trên máy cá nhân
+outputs/                  Nhật ký phát sinh khi chạy; không đưa lên Git
+```
+
 | File | Nội dung cần hiểu |
 |---|---|
 | `src/appliances/config.py` | 10 phút, 6 chân trời, 1.009 bản đo lịch sử, split và fold |
@@ -100,11 +112,13 @@ Một hàng train gồm **X(t)** và **Y(t)**. X(t) chỉ dùng lịch sử đã
 
 ## Notebook đã thực thi và có output
 
-1. `01_data_understanding.ipynb` — nguồn, audit, phân tích 3B và biểu đồ TRAIN.
-2. `02_preprocessing_features.ipynb` — đơn vị, lag/rolling, split và phép tính bằng số đo thật.
-3. `03_models_tuning.ipynb` — fit Ridge thật, kiểm khớp kết quả, full search, ablation và GPU.
-4. `04_evaluation_error_analysis.ipynb` — ba mức đánh giá, khoảng, PR, trường hợp lỗi và kiểm nghiệm độc lập.
-5. `05_demo_monitoring.ipynb` — chạy replay và nhật ký phản hồi trong một phiên thử riêng.
+| Thứ tự | Notebook | Nội dung |
+|---|---|---|
+| 01 | [Hiểu dữ liệu](notebooks/01_data_understanding.ipynb) | Nguồn, kiểm tra chất lượng, phân tích 3B và biểu đồ TRAIN |
+| 02 | [Tiền xử lý và đặc trưng](notebooks/02_preprocessing_features.ipynb) | Đơn vị, độ trễ, cửa sổ thống kê, chia tập và phép tính từ số đo thật |
+| 03 | [Mô hình và lựa chọn cấu hình](notebooks/03_models_tuning.ipynb) | Huấn luyện Ridge, đối chiếu tìm kiếm, thử bỏ đặc trưng và đo CPU/GPU |
+| 04 | [Đánh giá và phân tích lỗi](notebooks/04_evaluation_error_analysis.ipynb) | MAE/RMSE, khoảng dự báo, cảnh báo, lỗi lớn và kiểm chứng nguồn |
+| 05 | [Demo và giám sát](notebooks/05_demo_monitoring.ipynb) | Phát lại dữ liệu, nhãn đến muộn và nhật ký phản hồi SQLite |
 
 Notebook đọc full-search đã lưu để xem lại mà không phải train GPU. Cell Ridge minh họa huấn luyện thật. Tái chạy toàn bộ search bằng lệnh train phía dưới.
 
@@ -145,9 +159,9 @@ Dùng `--device cpu` khi train trên máy CPU. Tạo thư mục output mới cho
 
 ## Giới hạn và liên hệ học phần
 
-Giải pháp bao phủ tám bước lifecycle. Các phần dữ liệu, model, demo và monitoring có bằng chứng chạy local. Bản dữ liệu chỉ có một ngôi nhà, chưa phủ một năm và thiếu lịch bật/tắt thiết bị, can thiệp, biểu giá cùng ràng buộc vận hành. Các forecast origin có nhãn giờ chồng lấp. Chưa có xác nhận từ nghiệm thu nhóm hoặc máy thứ hai.
+Giải pháp triển khai tám bước từ xác định vấn đề đến giám sát và cải tiến. Dữ liệu, mô hình và demo đã được kiểm thử trên máy cá nhân. Nguồn chỉ có một ngôi nhà, chưa phủ một năm và thiếu lịch bật/tắt thiết bị, can thiệp, biểu giá cùng ràng buộc vận hành. Các thời điểm phát dự báo có nhãn giờ tới chồng lấp. Chưa có đánh giá người dùng và xác nhận hoạt động trên máy thứ hai.
 
-Liên hệ Lee Case Study 4 nằm ở dự báo trước và hỗ trợ quyết định. Mô hình cơ chế thiết bị, tối ưu start-stop và sức khỏe máy cần nguồn dữ liệu khác. Slide 05 và sách Industry 5.0 được dùng để phân tích tích hợp, con người và độ tin cậy.
+Liên hệ Lee Case Study 4 nằm ở dự báo trước và hỗ trợ quyết định. Mô hình cơ chế thiết bị, tối ưu bật/tắt và đánh giá sức khỏe máy cần nguồn dữ liệu khác. Bài giảng 05, sách do Soldatos biên tập và roadmap Lee 2026 cung cấp cơ sở thảo luận về tích hợp hệ thống, vai trò con người và độ tin cậy.
 
 ## Tài liệu tham khảo
 

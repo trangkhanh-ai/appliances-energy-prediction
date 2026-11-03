@@ -2,8 +2,6 @@
 
 import json
 import platform
-import subprocess
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 import joblib
@@ -14,7 +12,13 @@ from threadpoolctl import threadpool_limits
 from .config import FOLDS, HORIZONS, BOUNDARIES, RELEASE, MODEL_DIR, RAW_SHA256
 from .data import download_data, load_data, write_json, sha256
 from .features import supervised, split_rows, feature_columns
-from .modeling import CANDIDATES, fit_point, predict_point, fit_quantiles, predict_quantiles
+from .modeling import (
+    CANDIDATES,
+    fit_point,
+    predict_point,
+    fit_quantiles,
+    predict_quantiles,
+)
 from .metrics import point_metrics, calibration_margin, interval_metrics, alert_metrics
 
 LABELS = [f"actual_{m}m_kWh" for m in HORIZONS]
@@ -27,7 +31,10 @@ def baseline(raw, rows, name):
         return np.repeat(energy.reindex(times).to_numpy()[:, None], 6, axis=1)
     lag = pd.Timedelta(days=1 if name == "previous_day" else 7)
     return np.column_stack(
-        [energy.reindex(times + pd.Timedelta(minutes=m) - lag).to_numpy() for m in HORIZONS]
+        [
+            energy.reindex(times + pd.Timedelta(minutes=m) - lag).to_numpy()
+            for m in HORIZONS
+        ]
     )
 
 
@@ -69,13 +76,16 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
             "human_acceptance": "pending",
         },
     )
-    rows[["timestamp", "forecast_end", "ready"]].to_csv(output / "row_manifest.csv", index=False)
+    rows[["timestamp", "forecast_end", "ready"]].to_csv(
+        output / "row_manifest.csv", index=False
+    )
     processed = output / "processed"
     processed.mkdir()
     for name, part in parts.items():
         part.to_csv(processed / f"{name}.csv", index=False)
     write_json(
-        output / "features.json", {g: feature_columns(rows[all_columns], g) for g in ("G0", "G1")}
+        output / "features.json",
+        {g: feature_columns(rows[all_columns], g) for g in ("G0", "G1")},
     )
     search, oof_frames, final_models = [], [], {}
     with threadpool_limits(limits=1):
@@ -85,7 +95,9 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
                 name = group + "_" + candidate["name"]
                 fold_actual, fold_pred = [], []
                 for fold, (start, end) in enumerate(FOLDS, 1):
-                    train = rows.loc[rows.ready & (rows.forecast_end < pd.Timestamp(start))]
+                    train = rows.loc[
+                        rows.ready & (rows.forecast_end < pd.Timestamp(start))
+                    ]
                     valid = rows.loc[
                         rows.ready
                         & (rows.timestamp >= pd.Timestamp(start))
@@ -99,7 +111,11 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
                     fold_actual.append(actual)
                     fold_pred.append(pred)
                     frame = pd.DataFrame(
-                        {"timestamp": valid.timestamp.to_numpy(), "model": name, "fold": fold}
+                        {
+                            "timestamp": valid.timestamp.to_numpy(),
+                            "model": name,
+                            "fold": fold,
+                        }
                     )
                     for i, m in enumerate(HORIZONS):
                         frame[f"actual_{m}m_kWh"] = actual[:, i]
@@ -123,7 +139,9 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
                 final_models[name] = (model, columns, candidate)
                 threshold = float(train.actual_hour_kWh.quantile(0.95))
                 score = point_metrics(
-                    val[LABELS].to_numpy(), predict_point(model, val[columns]), threshold
+                    val[LABELS].to_numpy(),
+                    predict_point(model, val[columns]),
+                    threshold,
                 )
                 search.append(
                     {
@@ -154,7 +172,10 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
                     flush=True,
                 )
         table = pd.DataFrame(
-            [{k: v for k, v in s.items() if k not in ("horizons", "devices")} for s in search]
+            [
+                {k: v for k, v in s.items() if k not in ("horizons", "devices")}
+                for s in search
+            ]
         )
         shortlist = (
             table[table.split.eq("oof")]
@@ -181,7 +202,9 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
         write_json(output / "selection.json", selection)
         write_json(output / "search_full.json", search)
         table.to_csv(output / "search_metrics.csv", index=False)
-        pd.concat(oof_frames, ignore_index=True).to_csv(output / "oof_predictions.csv", index=False)
+        pd.concat(oof_frames, ignore_index=True).to_csv(
+            output / "oof_predictions.csv", index=False
+        )
         ablations = []
         for label, excluded in [
             ("without_day_lag", {"energy_lag_144"}),
@@ -190,14 +213,19 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
         ]:
             subset = [c for c in columns if c not in excluded]
             fitted, timing = fit_point(
-                parts["train"][subset], parts["train"][LABELS].to_numpy(), candidate, device
+                parts["train"][subset],
+                parts["train"][LABELS].to_numpy(),
+                candidate,
+                device,
             )
             score = point_metrics(
                 parts["validation"][LABELS].to_numpy(),
                 predict_point(fitted, parts["validation"][subset]),
                 float(parts["train"].actual_hour_kWh.quantile(0.95)),
             )
-            ablations.append({"ablation": label, "features": len(subset), **score, **timing})
+            ablations.append(
+                {"ablation": label, "features": len(subset), **score, **timing}
+            )
         write_json(output / "ablation.json", ablations)
         if device == "cuda":
             benchmark = {}
@@ -225,7 +253,9 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
             parts["train"][columns], parts["train"].actual_hour_kWh.to_numpy()
         )
         q_cal = predict_quantiles(quantiles, parts["calibration"][columns])
-        margin = calibration_margin(parts["calibration"].actual_hour_kWh.to_numpy(), q_cal)
+        margin = calibration_margin(
+            parts["calibration"].actual_hour_kWh.to_numpy(), q_cal
+        )
         threshold = float(parts["train"].actual_hour_kWh.quantile(0.95))
         bundle = {
             "contract": "appliances_6x10min_v1",
@@ -291,13 +321,15 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
                     {
                         "split": split,
                         "model": name,
-                        **point_metrics(actual, predict_point(other, part[cols]), threshold),
+                        **point_metrics(
+                            actual, predict_point(other, part[cols]), threshold
+                        ),
                     }
                 )
         write_json(output / "metrics.json", metrics)
-        pd.DataFrame([{k: v for k, v in s.items() if k != "horizons"} for s in comparison]).to_csv(
-            output / "comparison.csv", index=False
-        )
+        pd.DataFrame(
+            [{k: v for k, v in s.items() if k != "horizons"} for s in comparison]
+        ).to_csv(output / "comparison.csv", index=False)
         write_json(output / "comparison_full.json", comparison)
         residual = abs(
             parts["calibration"].actual_hour_kWh.to_numpy()
@@ -329,14 +361,18 @@ def run_experiment(output=RELEASE, model_dir=MODEL_DIR, device="cuda"):
         )
     freeze_results(output, model_dir)
     print(
-        json.dumps(json.loads((output / "summary.json").read_text(encoding="utf-8")), indent=2),
+        json.dumps(
+            json.loads((output / "summary.json").read_text(encoding="utf-8")), indent=2
+        ),
         flush=True,
     )
 
 
 def freeze_results(output=RELEASE, model_dir=MODEL_DIR):
     output, model_dir = Path(output), Path(model_dir)
-    paths = [p for p in output.rglob("*") if p.is_file() and p.name != "results_lock.json"]
+    paths = [
+        p for p in output.rglob("*") if p.is_file() and p.name != "results_lock.json"
+    ]
     paths += [p for p in model_dir.rglob("*") if p.is_file()]
     from .config import ROOT
 

@@ -3,7 +3,6 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 import nbformat
 from nbclient import NotebookClient
 from src.appliances.config import ROOT

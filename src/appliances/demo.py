@@ -20,7 +20,9 @@ class Replay:
         self.reference = json.loads(
             (Path(model_dir) / "monitor_reference.json").read_text(encoding="utf-8")
         )
-        self.first = int(self.raw.index[self.raw.timestamp >= pd.Timestamp(BOUNDARIES[3])][0])
+        self.first = int(
+            self.raw.index[self.raw.timestamp >= pd.Timestamp(BOUNDARIES[3])][0]
+        )
         self.last = len(self.raw) - 7
         self.position = self.first
         self.session = uuid.uuid4().hex
@@ -64,7 +66,8 @@ class Replay:
         observed = history.set_index("timestamp").energy_kWh
         for issue, end in pending:
             values = observed.loc[
-                (observed.index > pd.Timestamp(issue)) & (observed.index <= pd.Timestamp(end))
+                (observed.index > pd.Timestamp(issue))
+                & (observed.index <= pd.Timestamp(end))
             ]
             if len(values) == 6:
                 self.db.execute(
@@ -90,13 +93,18 @@ class Replay:
             values = np.asarray([[r[1], r[2], r[3], r[4]] for r in recent], dtype=float)
             error = abs(values[:, 0] - values[:, 3])
             coverage = (values[:, 3] >= values[:, 1]) & (values[:, 3] <= values[:, 2])
-            monitoring.update(mae_hour_kWh=float(error.mean()), coverage=float(coverage.mean()))
+            monitoring.update(
+                mae_hour_kWh=float(error.mean()), coverage=float(coverage.mean())
+            )
             if len(recent) >= 288:
                 errors = [float(error[-288:-144].mean()), float(error[-144:].mean())]
                 cov = [float(coverage[-288:-144].mean()), float(coverage[-144:].mean())]
-                bad_error = all(v > 1.5 * self.reference["calibration_mae_kWh"] for v in errors)
+                bad_error = all(
+                    v > 1.5 * self.reference["calibration_mae_kWh"] for v in errors
+                )
                 bad_cov = all(
-                    v < max(0.0, self.reference["calibration_coverage"] - 0.1) for v in cov
+                    v < max(0.0, self.reference["calibration_coverage"] - 0.1)
+                    for v in cov
                 )
                 monitoring.update(
                     status="review" if bad_error or bad_cov else "within_reference",
@@ -117,9 +125,12 @@ class Replay:
             ],
             "monitoring": monitoring,
             "decisions": [
-                dict(zip(("issue_time", "operator", "action", "note"), r)) for r in decisions
+                dict(zip(("issue_time", "operator", "action", "note"), r))
+                for r in decisions
             ],
-            "timing_p95_ms": float(np.quantile(self.timings, 0.95)) if self.timings else None,
+            "timing_p95_ms": (
+                float(np.quantile(self.timings, 0.95)) if self.timings else None
+            ),
             "at_end": self.position >= self.last,
             "mode": "Replay of real 2016 measurements, one step = 10 minutes",
         }
@@ -147,8 +158,14 @@ class Replay:
                     or not d["operator"].strip()
                     or len(d["operator"]) > 100
                 ):
-                    raise ValueError("Operator name is required, maximum 100 characters")
-                if not isinstance(d.get("token"), str) or not d["token"] or len(d["token"]) > 100:
+                    raise ValueError(
+                        "Operator name is required, maximum 100 characters"
+                    )
+                if (
+                    not isinstance(d.get("token"), str)
+                    or not d["token"]
+                    or len(d["token"]) > 100
+                ):
                     raise ValueError("A request token is required")
                 note = d.get("note", "")
                 if not isinstance(note, str) or len(note) > 1000:
@@ -167,8 +184,12 @@ class Replay:
                     "SELECT * FROM decisions WHERE token=?", (d["token"],)
                 ).fetchone()
                 if old is not None and tuple(old) != row:
-                    raise ValueError("Request token already used for a different decision")
-                self.db.execute("INSERT OR IGNORE INTO decisions VALUES(?,?,?,?,?,?)", row)
+                    raise ValueError(
+                        "Request token already used for a different decision"
+                    )
+                self.db.execute(
+                    "INSERT OR IGNORE INTO decisions VALUES(?,?,?,?,?,?)", row
+                )
                 self.db.commit()
             elif action != "state":
                 raise ValueError("Unknown replay action")

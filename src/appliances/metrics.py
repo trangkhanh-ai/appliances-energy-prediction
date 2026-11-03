@@ -13,7 +13,11 @@ from .config import HORIZONS, QUANTILES
 
 def point_metrics(actual, predicted, threshold):
     actual, predicted = np.asarray(actual), np.asarray(predicted, dtype=float)
-    if actual.shape != predicted.shape or actual.shape[1] != 6 or not np.isfinite(predicted).all():
+    if (
+        actual.shape != predicted.shape
+        or actual.shape[1] != 6
+        or not np.isfinite(predicted).all()
+    ):
         raise ValueError("Expected six finite predictions per origin")
     error = predicted - actual
     total_error = error.sum(axis=1)
@@ -26,7 +30,9 @@ def point_metrics(actual, predicted, threshold):
         "rmse_hour_kWh": float(np.sqrt(np.mean(total_error**2))),
         "bias_hour_kWh": float(total_error.mean()),
         "high_rows": int(high.sum()),
-        "high_mae_hour_kWh": float(abs(total_error[high]).mean()) if high.any() else None,
+        "high_mae_hour_kWh": (
+            float(abs(total_error[high]).mean()) if high.any() else None
+        ),
         "horizons": [
             {
                 "minutes": m,
@@ -81,11 +87,15 @@ def alert_metrics(actual, upper, threshold):
         "tn": tn,
         "precision": precision,
         "recall": recall,
-        "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
+        "f1": (
+            2 * precision * recall / (precision + recall) if precision + recall else 0.0
+        ),
         "false_positive_rate": fp / (fp + tn) if fp + tn else 0.0,
         "false_discovery_rate": fp / (tp + fp) if tp + fp else 0.0,
         "positive_prevalence": float(positive.mean()),
-        "average_precision": float(average_precision_score(positive, upper)) if both else None,
+        "average_precision": (
+            float(average_precision_score(positive, upper)) if both else None
+        ),
         "pr_auc_trapezoid": float(auc(re, pr)) if both else None,
         "roc_auc_ranking": float(roc_auc_score(positive, upper)) if both else None,
         "definition": "Overlapping forecast origins, not independent physical events; no verified intervention lead time",

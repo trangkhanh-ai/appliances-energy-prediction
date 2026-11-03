@@ -25,7 +25,10 @@ def serve(port=8767, database=None, model_dir=MODEL_DIR):
             self.wfile.write(data)
 
         def do_GET(self):
-            if self.headers.get("Host") not in (f"127.0.0.1:{port}", f"localhost:{port}"):
+            if self.headers.get("Host") not in (
+                f"127.0.0.1:{port}",
+                f"localhost:{port}",
+            ):
                 return self.send(403, "{}")
             if self.path == "/":
                 html = (
@@ -42,7 +45,8 @@ def serve(port=8767, database=None, model_dir=MODEL_DIR):
             origin = self.headers.get("Origin")
             allowed = (f"http://127.0.0.1:{port}", f"http://localhost:{port}")
             if (
-                self.headers.get("Host") not in (f"127.0.0.1:{port}", f"localhost:{port}")
+                self.headers.get("Host")
+                not in (f"127.0.0.1:{port}", f"localhost:{port}")
                 or origin not in allowed
                 or self.headers.get("X-Session-Token") != token
             ):

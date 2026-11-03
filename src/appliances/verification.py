@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from .config import ROOT, RELEASE, MODEL_DIR, HORIZONS
-from .data import load_data, sha256, write_json
+from .data import load_data, sha256
 from .features import supervised, split_rows, make_features, features_at_issue
 from .inference import Forecaster
 from .metrics import point_metrics, interval_metrics, alert_metrics
@@ -47,9 +47,14 @@ def verify(output=RELEASE, model_dir=MODEL_DIR):
             parse_dates=["timestamp", "forecast_end"],
             float_precision="round_trip",
         )
-        pd.testing.assert_series_equal(frame.timestamp, part.timestamp, check_names=False)
+        pd.testing.assert_series_equal(
+            frame.timestamp, part.timestamp, check_names=False
+        )
         actual = np.column_stack(
-            [meter.reindex(frame.timestamp + pd.Timedelta(minutes=m)).to_numpy() for m in HORIZONS]
+            [
+                meter.reindex(frame.timestamp + pd.Timedelta(minutes=m)).to_numpy()
+                for m in HORIZONS
+            ]
         )
         saved = frame[[f"actual_{m}m_kWh" for m in HORIZONS]].to_numpy()
         np.testing.assert_allclose(actual, saved, rtol=0, atol=1e-12)
@@ -60,7 +65,9 @@ def verify(output=RELEASE, model_dir=MODEL_DIR):
             "interval": interval_metrics(
                 actual.sum(axis=1), quant, model.bundle["margin"], threshold
             ),
-            "alert": alert_metrics(actual.sum(axis=1), frame.upper_hour_kWh.to_numpy(), threshold),
+            "alert": alert_metrics(
+                actual.sum(axis=1), frame.upper_hour_kWh.to_numpy(), threshold
+            ),
         }
         assert_nested_close(computed, stored[split])
         predictions[split] = frame
@@ -74,11 +81,16 @@ def verify(output=RELEASE, model_dir=MODEL_DIR):
         original_rows, _ = supervised(raw)
         changed_rows, _ = supervised(changed)
         np.testing.assert_allclose(
-            changed_rows.actual_hour_kWh.iloc[index] - original_rows.actual_hour_kWh.iloc[index],
+            changed_rows.actual_hour_kWh.iloc[index]
+            - original_rows.actual_hour_kWh.iloc[index],
             1.0,
         )
         leakage.append(
-            {"index": index, "future_input_unchanged": True, "target_changes_correctly": True}
+            {
+                "index": index,
+                "future_input_unchanged": True,
+                "target_changes_correctly": True,
+            }
         )
     timings = []
     test = predictions["test"]
@@ -93,7 +105,9 @@ def verify(output=RELEASE, model_dir=MODEL_DIR):
             timings.append(elapsed)
         np.testing.assert_allclose(
             [r["predicted_kWh"] for r in payload["horizons"]],
-            test.iloc[index][[f"predicted_{m}m_kWh" for m in HORIZONS]].to_numpy(dtype=float),
+            test.iloc[index][[f"predicted_{m}m_kWh" for m in HORIZONS]].to_numpy(
+                dtype=float
+            ),
             rtol=1e-6,
             atol=1e-9,
         )
@@ -111,7 +125,11 @@ def verify(output=RELEASE, model_dir=MODEL_DIR):
             atol=1e-12,
         )
         assert payload["actual_hour_kWh"] is None
-        full = make_features(raw).loc[raw.timestamp.eq(t), model.bundle["features"]].to_numpy()
+        full = (
+            make_features(raw)
+            .loc[raw.timestamp.eq(t), model.bundle["features"]]
+            .to_numpy()
+        )
         np.testing.assert_allclose(
             features_at_issue(history, model.bundle["features"]).to_numpy(),
             full,

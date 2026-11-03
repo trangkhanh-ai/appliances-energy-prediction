@@ -19,7 +19,8 @@ def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8"
+        json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
     )
 
 
@@ -31,7 +32,9 @@ def download_data(path=RAW_FILE):
         return path
     with urllib.request.urlopen(SOURCE_URL, timeout=60) as response:
         archive = zipfile.ZipFile(io.BytesIO(response.read()))
-    name = next(name for name in archive.namelist() if name.endswith("energydata_complete.csv"))
+    name = next(
+        name for name in archive.namelist() if name.endswith("energydata_complete.csv")
+    )
     content = archive.read(name)
     if hashlib.sha256(content).hexdigest() != RAW_SHA256:
         raise ValueError("UCI download differs from the audited source")
@@ -47,7 +50,10 @@ def validate_raw(frame):
     numeric = frame.drop(columns="date").apply(pd.to_numeric, errors="raise")
     if times.isna().any() or times.duplicated().any() or frame.isna().any().any():
         raise ValueError("Missing or duplicate source values")
-    if not times.diff().dropna().eq(FREQUENCY).all() or not times.eq(times.dt.floor("10min")).all():
+    if (
+        not times.diff().dropna().eq(FREQUENCY).all()
+        or not times.eq(times.dt.floor("10min")).all()
+    ):
         raise ValueError("Source must be an ordered continuous 10-minute grid")
     if not np.isfinite(numeric.to_numpy()).all():
         raise ValueError("Non-finite source values")

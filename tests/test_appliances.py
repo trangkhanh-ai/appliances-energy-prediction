@@ -29,7 +29,9 @@ class ForecastTests(unittest.TestCase):
         np.testing.assert_array_equal(self.raw.energy_kWh, self.raw.Appliances / 1000)
 
     def test_split_purge(self):
-        for left, right in zip(list(self.parts.values())[:-1], list(self.parts.values())[1:]):
+        for left, right in zip(
+            list(self.parts.values())[:-1], list(self.parts.values())[1:]
+        ):
             self.assertLess(left.forecast_end.max(), right.timestamp.min())
         self.assertEqual(sum(self.counts.values()), 19735 - 1008 - 6 - 18)
 
@@ -92,7 +94,9 @@ class ForecastTests(unittest.TestCase):
     def test_calibration_interval_csv_round_trip(self):
         from src.appliances.metrics import interval_metrics
 
-        frame = pd.read_csv(RELEASE / "predictions/calibration.csv", float_precision="round_trip")
+        frame = pd.read_csv(
+            RELEASE / "predictions/calibration.csv", float_precision="round_trip"
+        )
         labels = frame[[f"actual_{m}m_kWh" for m in HORIZONS]].to_numpy()
         quantiles = frame[["p10_hour_kWh", "p50_hour_kWh", "p90_hour_kWh"]].to_numpy()
         metric = interval_metrics(
@@ -102,7 +106,9 @@ class ForecastTests(unittest.TestCase):
             self.model.bundle["threshold"],
         )
         stored = json.loads((RELEASE / "metrics.json").read_text(encoding="utf-8"))
-        self.assertEqual(metric["coverage"], stored["calibration"]["interval"]["coverage"])
+        self.assertEqual(
+            metric["coverage"], stored["calibration"]["interval"]["coverage"]
+        )
 
     def test_replay_labels_mature_only_after_six_steps(self):
         with tempfile.TemporaryDirectory() as folder:

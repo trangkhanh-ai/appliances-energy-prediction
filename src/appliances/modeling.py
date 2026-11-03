@@ -58,7 +58,9 @@ def fit_point(x, y, candidate, device="cuda"):
                 config = json.loads(model.get_booster().save_config())
                 actual_device = config["learner"]["generic_param"]["device"]
                 if device.startswith("cuda") and not actual_device.startswith("cuda"):
-                    raise RuntimeError("CUDA training requested but CPU fallback occurred")
+                    raise RuntimeError(
+                        "CUDA training requested but CPU fallback occurred"
+                    )
                 device_logs.append(actual_device)
                 model.set_params(device="cpu")
             models.append(model)
@@ -99,7 +101,9 @@ def fit_quantiles(x, actual):
 
 
 def predict_quantiles(models, x):
-    raw = np.column_stack([model.predict(np.asarray(x, dtype=float)) for model in models])
+    raw = np.column_stack(
+        [model.predict(np.asarray(x, dtype=float)) for model in models]
+    )
     if not np.isfinite(raw).all():
         raise ValueError("Invalid quantile output")
     return np.sort(np.maximum(raw, 0.0), axis=1)

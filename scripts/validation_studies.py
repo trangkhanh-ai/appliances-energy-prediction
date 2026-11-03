@@ -2,7 +2,6 @@
 
 import json
 import subprocess
-import pandas as pd
 from threadpoolctl import threadpool_limits
 from src.appliances.config import RELEASE, HORIZONS
 from src.appliances.data import load_data, write_json
@@ -25,11 +24,17 @@ def run():
             for label, excluded in [
                 ("without_day_lag", {"energy_lag_144"}),
                 ("without_week_lag", {"energy_lag_1008"}),
-                ("without_rolling", {"sum_1h", "mean_4h", "std_4h", "mean_24h", "max_24h"}),
+                (
+                    "without_rolling",
+                    {"sum_1h", "mean_4h", "std_4h", "mean_24h", "max_24h"},
+                ),
             ]:
                 subset = [c for c in columns if c not in excluded]
                 fitted, timing = fit_point(
-                    parts["train"][subset], parts["train"][labels].to_numpy(), candidate, "cuda"
+                    parts["train"][subset],
+                    parts["train"][labels].to_numpy(),
+                    candidate,
+                    "cuda",
                 )
                 result = {
                     "ablation": label,
@@ -49,7 +54,10 @@ def run():
             c = next(c for c in CANDIDATES if c["name"] == "xgb_3")
             for backend in ("cpu", "cuda"):
                 fitted, timing = fit_point(
-                    parts["train"][columns], parts["train"][labels].to_numpy(), c, backend
+                    parts["train"][columns],
+                    parts["train"][labels].to_numpy(),
+                    c,
+                    backend,
                 )
                 benchmark[backend] = {
                     "timing": timing,
@@ -65,7 +73,11 @@ def run():
             write_json(RELEASE / "gpu_benchmark.json", benchmark)
     try:
         gpu = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader"],
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,driver_version",
+                "--format=csv,noheader",
+            ],
             text=True,
         ).strip()
     except (FileNotFoundError, subprocess.CalledProcessError):

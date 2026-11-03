@@ -4,7 +4,6 @@ import json
 import time
 from pathlib import Path
 import joblib
-import numpy as np
 import pandas as pd
 from threadpoolctl import threadpool_limits
 from .config import MODEL_DIR, RAW_SHA256, HORIZONS
@@ -16,7 +15,9 @@ from .modeling import predict_point, predict_quantiles
 class Forecaster:
     def __init__(self, model_dir=MODEL_DIR):
         model_dir = Path(model_dir)
-        self.manifest = json.loads((model_dir / "manifest.json").read_text(encoding="utf-8"))
+        self.manifest = json.loads(
+            (model_dir / "manifest.json").read_text(encoding="utf-8")
+        )
         if sha256(model_dir / "forecast.joblib") != self.manifest["model_sha256"]:
             raise ValueError("Model hash mismatch")
         self.bundle = joblib.load(model_dir / "forecast.joblib")
