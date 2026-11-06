@@ -1,8 +1,19 @@
-# Dự báo điện năng thiết bị trong 60 phút tới
+# Dự báo điện năng thiết bị trong tòa nhà với UCI Appliances
 
-[![Verify Appliances](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml)
+[Kiểm thử tự động](.github/workflows/checks.yml)
 
-> Repository hiện dùng **UCI Appliances**, dù URL vẫn giữ tên Steel của phiên bản trước.
+Đồ án học phần **Ứng dụng AI trong công nghiệp**, sử dụng bộ dữ liệu
+**UCI Appliances Energy Prediction** trong danh sách đề xuất của giảng viên.
+
+## Nhóm thực hiện
+
+| Thành viên | Phần phụ trách |
+|---|---|
+| **Nguyễn Bảo Duy** | Trưởng nhóm; xác định bài toán, dữ liệu, baseline và mô hình |
+| **Trang Mai Quốc Khánh** | Đánh giá, phân tích lỗi và giới hạn ứng dụng công nghiệp |
+| **Lê Trần Nhật Huy** | Demo, lưu trữ dữ liệu và giám sát |
+
+## Bài toán
 
 ![So sánh mô hình trên validation và test](out/figures/f41_model_comparison.png)
 
