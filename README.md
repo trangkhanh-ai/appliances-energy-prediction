@@ -1,177 +1,125 @@
-# Dự báo điện năng thiết bị với UCI Appliances
+# Dự báo điện năng thiết bị trong 60 phút tới
 
-Giải pháp dự báo sáu khoảng **10–60 phút** tiếp theo và hỗ trợ người sử dụng xem xét mức tiêu thụ cao. Đồ án học phần **Ứng dụng AI trong công nghiệp**, dùng dataset tòa nhà được giảng viên gợi ý.
+[![Verify Appliances](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/trangkhanh-ai/steel-industry-energy-consumption/actions/workflows/checks.yml)
 
-![Quy trình](results/appliances_20261102/figures/09_architecture.png)
+> Repository hiện dùng **UCI Appliances**, dù URL vẫn giữ tên Steel của phiên bản trước.
+
+![So sánh mô hình trên validation và test](out/figures/f41_model_comparison.png)
+
+Bản kiểm chứng ngày 05/11/2026, dùng UCI Appliances Energy Prediction.
+Đầu vào là số đo đã có đến thời điểm t. Đầu ra gồm sáu giá trị Wh cho t+10 đến t+60,
+tổng điện năng giờ tới và P10/P50/P90 của tổng giờ. Cảnh báo nếu cận trên sau
+hiệu chỉnh vượt p95 TRAIN. Ngưỡng này không phải giới hạn công suất hợp đồng.
 
 ## Kết quả đã chạy
 
-Các kết quả dưới đây được tính từ số đo của **UCI Appliances Energy Prediction**. Dự án dự báo điện năng thiết bị trong một ngôi nhà; chưa đo điện hoặc tiền tiết kiệm sau can thiệp.
+- 19.735 hàng gốc, bước 10 phút; CSV giữ nguyên và kiểm SHA-256.
+- TRAIN 11.412, VALIDATION 2.010, CAL 2.298, TEST 3.847 origin hợp lệ.
+- Chọn A_ar_calendar (18 biến) và HGB-L1 theo hai fold walk-forward.
+- MAE tổng giờ TEST: 146,776743 Wh; persistence: 202,326488 Wh; giảm khoảng 27,46%.
+- Cảnh báo: TP 82, FP 349, FN 38, TN 3.378; precision 19,03%, recall 68,33%.
+- Độ phủ dải TEST 83,31%; nhóm cao chỉ 35,83%.
+- 15 unit test đạt; đủ 23.082 nhãn TEST kiểm lại; 200 origin online khớp batch.
 
-| Hạng mục | Kết quả TEST |
-|---|---:|
-| Phương án chọn bằng OOF và validation | G1 XGBoost, depth 3 |
-| Đặc trưng | 38 |
-| MAE mỗi khoảng 10 phút, trung bình sáu chân trời | 0,030932 kWh |
-| MAE tổng giờ tới | 0,150373 kWh |
-| RMSE tổng giờ tới | 0,318112 kWh |
-| MAE tổng giờ ở nhóm tiêu thụ cao | 1,125947 kWh |
-| Coverage khoảng dự báo toàn TEST | 78,48% |
-| Coverage riêng nhóm cao | 51,28% |
-| Precision / recall cảnh báo | 22,11% / 76,92% |
-| TP / FP / FN / TN theo origin | 90 / 317 / 27 / 2.261 |
+`out/results.json`, `out/test_predictions.csv`, `out/verification.json` là nguồn số liệu.
+Các con số ghi trong gói Master đầu vào không được coi là kết quả đã tái lập.
+Thời gian chạy phụ thuộc máy; không ép đúng thời gian tham chiếu.
 
-**Cảnh báo còn nhiều lần nhầm và nhóm cao còn yếu.** Đầu ra hỗ trợ người sử dụng kiểm tra và phản hồi. Kết quả không đủ cho tự động cắt điện hay chứng minh tiết kiệm thực tế.
+## Cài môi trường
 
-![Mô hình](results/appliances_20261102/figures/04_models.png)
-
-## Chạy nhanh trên Windows
-
-Dùng Python **3.14** để đọc gói mô hình trong môi trường đã kiểm nghiệm. Mở PowerShell ở thư mục chứa README.
+Dùng Python 3.12 trên Windows. Mở PowerShell trong thư mục này:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements-notebooks.txt
-.venv\Scripts\python -X utf8 -m scripts.show_results
-.venv\Scripts\python -X utf8 -m scripts.serve_demo --port 8767
+py -3.12 -m venv .venv
+.venv\Scripts\python -m pip install -r requirements-lock.txt
+$env:OMP_NUM_THREADS="2"
+$env:OPENBLAS_NUM_THREADS="2"
+$env:MKL_NUM_THREADS="2"
+.venv\Scripts\python -m unittest discover -v
 ```
 
-Mở **http://127.0.0.1:8767/**. Các mô hình xuất ra dùng CPU khi suy luận. GPU chỉ cần khi chọn train với `--device cuda`.
+## Đọc kết quả và chạy demo sẵn
 
-![Giao diện đã chạy](results/appliances_20261102/figures/11_demo.png)
-
-- **Tiếp 10 phút** nhận thêm một bản đo rồi phát dự báo mới.
-- **Bắt đầu lại** tạo phiên replay mới.
-- Xem sáu dự báo, tổng giờ, khoảng dự báo và cảnh báo.
-- Nhập tên và phản hồi để lưu nhật ký SQLite trong `outputs/`.
-- Sai số chỉ được chấm khi đủ sáu số đo tương lai.
-
-## Dữ liệu và bài toán
-
-- Nguồn chính thức [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction), DOI **10.24432/C5VC8G**, CC BY 4.0.
-- CSV có 19.735 hàng, 29 cột, từ 11/01 đến 27/05/2016, cách nhau 10 phút.
-- Biến cần dự báo là `Appliances`, đơn vị nguồn Wh. `energy_kWh = Appliances / 1000`.
-- `lights` là trường riêng. Dự án dự báo điện năng của biến Appliances, không cộng tùy ý các trường để gọi thành toàn bộ điện năng nhà.
-- Timestamp được giả định là thứ tự của bản đo đã hoàn tất. Múi giờ và quy ước đầu/cuối khoảng đo cần xác minh khi nối công tơ thật.
-- Không có missing, duplicate timestamp hay khoảng gián đoạn trong bản nguồn đã kiểm.
-- Thời tiết trạm được nội suy upstream, chưa xác minh tính sẵn có khi dự báo. Các cột này và `rv1/rv2` được loại khỏi feature chính.
-
-File nguồn giữ nguyên byte với SHA256 `2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d`. `prepare_data` tải lại từ UCI nếu file chưa có, rồi kiểm hash.
-
-## Quy trình thực nghiệm
-
-| Tập | Thời gian | Số origin dùng |
-|---|---|---:|
-| TRAIN | 11/01–10/04/2016 | 11.988 |
-| Validation | 11–24/04/2016 | 2.010 |
-| Calibration | 25/04–08/05/2016 | 2.010 |
-| TEST | 09–27/05/2016 | 2.695 |
-
-Đã loại 1.008 hàng thiếu lịch sử tuần, 6 hàng cuối thiếu nhãn và 18 origin có nhãn đi qua ba ranh giới. Thực nghiệm có ba fold mở rộng nằm trong TRAIN, không shuffle.
-
-- **G0** có 19 feature từ lịch sử điện và lịch thời gian.
-- **G1** thêm 18 cảm biến nhà cùng `lights`, trễ một khoảng hoàn tất, thành 38 feature.
-- Baseline gồm persistence, ngày trước và tuần trước.
-- Ridge dùng scaler fit riêng trong mỗi TRAIN/fold. HGB và XGBoost có hai cấu hình mỗi họ.
-- Có 12 tổ hợp cấu hình/nhóm feature. Lấy cấu hình OOF tốt nhất từng họ/nhóm, sau đó chọn theo MAE tổng giờ validation.
-- TEST được chấm sau khi khóa lựa chọn. Không thay winner dựa vào thứ hạng TEST.
-- Ba HGB quantile riêng học P10/P50/P90 của tổng giờ. Calibration dùng tập CAL và score CQR-style không âm, mức danh nghĩa 80%. Chuỗi thời gian phụ thuộc nên coverage chưa có bảo đảm lý thuyết.
-- Ngưỡng cảnh báo **1,7065 kWh** là p95 tổng giờ trên TRAIN, phục vụ nghiên cứu. Đây không phải công suất hợp đồng.
-- Ablation trên validation và benchmark cùng cấu hình CPU/GPU được lưu riêng. Các chẩn đoán bổ sung không thay mô hình đã chọn.
-
-![Độ tin cậy](results/appliances_20261102/figures/08_high_load.png)
-
-## Đọc code theo thứ tự
-
-```text
-data/raw/                 CSV gốc tải từ UCI, kiểm bằng SHA256
-src/appliances/           Xử lý dữ liệu, huấn luyện, đánh giá và suy luận
-scripts/                  Các lệnh chuẩn bị dữ liệu, chạy và kiểm chứng
-notebooks/                Năm bước thực nghiệm có sẵn kết quả
-artifacts/                Mô hình đã huấn luyện và thông tin phiên bản
-results/                  Tập dữ liệu xử lý, dự báo, chỉ số và biểu đồ
-tests/                    Kiểm thử dữ liệu, thời gian và demo
-web/                      Giao diện chạy trên máy cá nhân
-outputs/                  Nhật ký phát sinh khi chạy; không đưa lên Git
+```powershell
+.venv\Scripts\python verify_results.py
+.venv\Scripts\python demo_replay.py --steps 14
+Start-Process out\demo\dashboard.html
 ```
 
-| File | Nội dung cần hiểu |
+Chỉ nạp `joblib` từ nguồn tin cậy. Model trong thư mục này được huấn luyện mới
+bằng code đi kèm, không nạp model nhận từ gói Master tham khảo.
+Demo là HTML tĩnh, không có server hoặc nút phê duyệt. Mặc định không tạo phản hồi.
+`--ack` chỉ là tham số mô phỏng CLI, không chứng minh người dùng đã nghiệm thu.
+SQLite chứa dự báo và chỉ điền actual khi đã tới đủ sáu phép đo tương lai.
+Script tạo lại DB trong thư mục `--out`; dùng một thư mục mới để giữ phiên cũ.
+
+## Huấn luyện lại toàn bộ
+
+```powershell
+.venv\Scripts\python run_all.py
+.venv\Scripts\python monitor_check.py
+.venv\Scripts\python draw_architecture.py
+.venv\Scripts\python demo_replay.py --steps 14
+.venv\Scripts\python verify_results.py
+```
+
+Các lệnh ghi đè kết quả trong `out/`; sao lưu thư mục trước khi muốn giữ một phiên.
+Thực nghiệm chính chạy CPU, giới hạn hai luồng; không có kết quả GPU trong bản này.
+Không chỉnh siêu tham số theo TEST. VALIDATION đã tham gia lựa chọn; TEST đã được
+quan sát trong phát triển và dùng lại cho kiểm chứng, chưa phải bằng chứng ngoài mẫu mới.
+
+## Các tệp chính
+
+| Tệp | Nhiệm vụ |
 |---|---|
-| `src/appliances/config.py` | 10 phút, 6 chân trời, 1.009 bản đo lịch sử, split và fold |
-| `src/appliances/data.py` | Kiểm nguồn, schema, phép đo và đổi đơn vị |
-| `src/appliances/features.py` | Tạo X từ quá khứ, Y từ sáu bản đo tương lai |
-| `src/appliances/modeling.py` | Fit Ridge, HGB, XGBoost và quantile |
-| `src/appliances/experiment.py` | Search, chọn model, calibration và lưu kết quả |
-| `src/appliances/metrics.py` | MAE, RMSE, coverage, PR và cảnh báo |
-| `src/appliances/inference.py` | Đọc artifact đã kiểm hash và dự báo từ lịch sử |
-| `src/appliances/demo.py` | Replay, nhãn đến muộn, SQLite và phản hồi |
-| `src/appliances/verification.py` | Đối chiếu nguồn, dự báo và metric |
-| `web/index.html` | Giao diện có biểu đồ, cảnh báo và thao tác người dùng |
+| appliances_core.py | Đọc và kiểm dữ liệu, đặc trưng, nhãn, mô hình, metric, suy luận |
+| ridge_scratch.py | Ridge đa đầu ra viết bằng NumPy, đối chiếu thư viện |
+| run_all.py | Walk-forward, chọn phương án, fit, phân vị, stress test, lưu số liệu/hình |
+| verify_results.py | Tính lại độc lập nhãn, dự báo, metric; bootstrap theo khối |
+| test_core.py, test_contract.py | Kiểm rò rỉ, purge, đầu vào và NO_FORECAST |
+| demo_replay.py | Phát lại lịch sử, SQLite và HTML tĩnh |
+| monitor_check.py | MAE, độ phủ, PSI theo tuần sau khi nhãn đã đến |
+| draw_architecture.py | Sơ đồ 7 thành phần, phân biệt hành động đề xuất |
+| data/ | CSV gốc và mô tả biến |
+| out/ | Model, số liệu, chứng cứ kiểm tra và hình đã tạo |
 
-Một hàng train gồm **X(t)** và **Y(t)**. X(t) chỉ dùng lịch sử đã quan sát, Y(t) gồm sáu bản đo tương lai để học. Khi demo, chỉ truyền X(t), còn actual được để trống cho đến khi đủ thời gian.
+## Giao diện và kiến trúc
 
-## Notebook đã thực thi và có output
+![Dự báo và cảnh báo trong phiên phát lại](out/figures/f61_dashboard.png)
 
-| Thứ tự | Notebook | Nội dung |
-|---|---|---|
-| 01 | [Hiểu dữ liệu](notebooks/01_data_understanding.ipynb) | Nguồn, kiểm tra chất lượng, phân tích 3B và biểu đồ TRAIN |
-| 02 | [Tiền xử lý và đặc trưng](notebooks/02_preprocessing_features.ipynb) | Đơn vị, độ trễ, cửa sổ thống kê, chia tập và phép tính từ số đo thật |
-| 03 | [Mô hình và lựa chọn cấu hình](notebooks/03_models_tuning.ipynb) | Huấn luyện Ridge, đối chiếu tìm kiếm, thử bỏ đặc trưng và đo CPU/GPU |
-| 04 | [Đánh giá và phân tích lỗi](notebooks/04_evaluation_error_analysis.ipynb) | MAE/RMSE, khoảng dự báo, cảnh báo, lỗi lớn và kiểm chứng nguồn |
-| 05 | [Demo và giám sát](notebooks/05_demo_monitoring.ipynb) | Phát lại dữ liệu, nhãn đến muộn và nhật ký phản hồi SQLite |
+<details>
+<summary>Xem luồng dữ liệu → AI → hỗ trợ quyết định</summary>
 
-Notebook đọc full-search đã lưu để xem lại mà không phải train GPU. Cell Ridge minh họa huấn luyện thật. Tái chạy toàn bộ search bằng lệnh train phía dưới.
+![Kiến trúc và giới hạn triển khai](out/figures/f51_architecture.png)
 
-```powershell
-.venv\Scripts\python -X utf8 -m scripts.run_notebooks
-```
+</details>
 
-## Kiểm chứng và suy luận
+## Vì sao xử lý dữ liệu như vậy
 
-```powershell
-.venv\Scripts\python -X utf8 -m unittest discover -s tests -v
-.venv\Scripts\python -X utf8 -m scripts.verify_results
-.venv\Scripts\python -X utf8 -m scripts.predict --issue-time 2016-05-09T00:00
-```
+- Không impute/cắt đỉnh trên CSV nguồn vì không có ô thiếu; đỉnh hợp lệ là đối tượng cần đánh giá.
+- Lag/rolling chỉ kết thúc tại t; lịch của t+10 biết trước. 145 hàng là lịch sử tối thiểu.
+- Không chia ngẫu nhiên; purge nhãn vượt biên. Scaler chỉ học phần train từng fold.
+- Chỉ Ridge cần StandardScaler. Không mã hóa chung mọi cột, không dùng SMOTE cho chuỗi hồi quy.
+- rv1/rv2 là biến ngẫu nhiên. Nhóm có rv1 chỉ làm đối chứng, không đủ chứng minh mức nhiễu.
+- Thời tiết trạm có nội suy, chưa rõ độ trễ công bố; C–E chỉ khảo sát ngoại tuyến.
+  Nhóm A cuối cùng không dùng chúng.
+- Dải hiệu chỉnh chỉ có độ phủ thực nghiệm, không cam kết xác suất đúng cho mỗi giờ.
 
-Verification kiểm hash artifact, nhãn từng hàng của bốn tập, tái tính metric, kiểm nhân quả bằng thay đổi tương lai trên bản sao và đối chiếu 100 origin suy luận với file dự báo. Đọc CSV dự báo dùng `float_precision='round_trip'` để bảo toàn số thực khi kiểm tra giá trị nằm đúng biên khoảng.
+## Giới hạn cần trình bày
 
-## Train lại
+Precision thấp và nhóm tiêu thụ cao còn yếu. Cụm origin chồng lấp không phải
+sự kiện thiết bị độc lập; lead của cụm ghép ngoại tuyến không chứng minh báo trước thiết bị bật.
+Wilson dựa trên giả định độc lập chưa hoàn toàn phù hợp; bootstrap theo khối chỉ khảo sát
+biến thiên trong giai đoạn đã có. Các tỷ lệ FP+r×FN là giả định, không phải tiền hoặc điện
+tiết kiệm. Chưa có can thiệp thật, công tơ chuẩn, biểu giá, hoặc nghiệm thu người dùng.
+Giám sát là batch ngoại tuyến; chưa kết nối thiết bị thật hay tự retrain.
 
-```powershell
-.venv\Scripts\python -X utf8 -m scripts.train_models --device cuda --output results/local_run --model-dir artifacts/local_run
-.venv\Scripts\python -X utf8 -m scripts.verify_results --output results/local_run --model-dir artifacts/local_run
-```
+## Nguồn tham khảo
 
-Dùng `--device cpu` khi train trên máy CPU. Tạo thư mục output mới cho mỗi lần chạy. `device=cuda` được kiểm sau fit, CPU fallback gây lỗi rõ ràng. Sáu mô hình point được lưu trong gói dùng CPU khi demo.
-
-## Kết quả cố định nằm ở đâu
-
-- `data/raw/` giữ nguồn.
-- `results/appliances_20261102/processed/` giữ các tập xử lý.
-- `search_metrics.csv`, `search_full.json`, `oof_predictions.csv` giữ search và OOF.
-- `selection.json` ghi lựa chọn trước TEST.
-- `predictions/` giữ số đo, dự báo và khoảng của bốn tập.
-- `metrics.json`, `comparison.csv`, `conditional_errors.csv`, `largest_errors.csv` giữ đánh giá.
-- `figures/` giữ biểu đồ do code tạo.
-- `artifacts/appliances_20261102/` giữ model, manifest và tham chiếu giám sát.
-- `results_lock.json` giữ checksum kết quả. Thư mục `outputs/` giữ session local và tài liệu học thuật.
-
-## Giới hạn và liên hệ học phần
-
-Giải pháp triển khai tám bước từ xác định vấn đề đến giám sát và cải tiến. Dữ liệu, mô hình và demo đã được kiểm thử trên máy cá nhân. Nguồn chỉ có một ngôi nhà, chưa phủ một năm và thiếu lịch bật/tắt thiết bị, can thiệp, biểu giá cùng ràng buộc vận hành. Các thời điểm phát dự báo có nhãn giờ tới chồng lấp. Chưa có đánh giá người dùng và xác nhận hoạt động trên máy thứ hai.
-
-Liên hệ Lee Case Study 4 nằm ở dự báo trước và hỗ trợ quyết định. Mô hình cơ chế thiết bị, tối ưu bật/tắt và đánh giá sức khỏe máy cần nguồn dữ liệu khác. Bài giảng 05, sách do Soldatos biên tập và roadmap Lee 2026 cung cấp cơ sở thảo luận về tích hợp hệ thống, vai trò con người và độ tin cậy.
-
-## Tài liệu tham khảo
-
-1. [UCI Appliances, DOI 10.24432/C5VC8G](https://doi.org/10.24432/C5VC8G).
-2. L. M. Candanedo et al., *Data driven prediction models of energy use of appliances in a low-energy house*, Energy and Buildings 140, 2017, [DOI 10.1016/j.enbuild.2017.01.083](https://doi.org/10.1016/j.enbuild.2017.01.083). [Kho tác giả](https://github.com/LuisM78/Appliances-energy-prediction-data).
-3. [scikit-learn — Lagged features for time series forecasting](https://scikit-learn.org/stable/auto_examples/applications/plot_time_series_lagged_features.html).
-4. T. Chen and C. Guestrin, [XGBoost, KDD 2016](https://arxiv.org/abs/1603.02754). [Tài liệu GPU](https://xgboost.readthedocs.io/en/stable/gpu/).
-5. Y. Romano et al., [Conformalized Quantile Regression, 2019](https://arxiv.org/abs/1905.03222).
-6. J. Lee, [Industrial AI, 2020](https://doi.org/10.1007/978-981-15-2144-7), Case Study 4, pp. 82–88.
-7. J. Soldatos, Ed., [Artificial Intelligence in Manufacturing, 2024](https://doi.org/10.1007/978-3-031-46452-2).
-8. J. Lee et al., [2026 roadmap on AI and ML for smart manufacturing](https://doi.org/10.1088/3049-4761/ae5967).
-9. J. Brownlee, *Deep Learning for Time Series Forecasting*, 2018, ch. 3–4; *Imbalanced Classification with Python*, 2020, ch. 4, 7.
-10. H. T. Lộc, bài giảng 01–05, học phần Ứng dụng AI trong công nghiệp, HUFLIT, 2026.
+- [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction), DOI 10.24432/C5VC8G, CC BY 4.0.
+- [Dữ liệu và code R của tác giả](https://github.com/LuisM78/Appliances-energy-prediction-data).
+- Candanedo et al., Energy and Buildings, 2017, DOI 10.1016/j.enbuild.2017.01.083.
+- Lee, Industrial AI, 2020, DOI 10.1007/978-981-15-2144-7, Case Study 4.
+- [scikit-learn HGB](https://scikit-learn.org/1.9/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html).
+- [Conformalized Quantile Regression](https://arxiv.org/abs/1905.03222).
+- Künsch, 1989, DOI 10.1214/aos/1176347265: nền tảng bootstrap cho quan sát phụ thuộc.

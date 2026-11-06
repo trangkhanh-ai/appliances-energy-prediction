@@ -1,10 +1,6 @@
-* text=auto eol=lf
-*.py text eol=lf
-*.json text eol=lf
-*.csv -text
-*.joblib binary
+# Preserve the exact raw data and source bytes used by SHA-256 verification.
+* -text whitespace=cr-at-eol
+# Keep the original dataset description verbatim, including its source spacing.
+data/** -whitespace
 *.png binary
-data/** -text
-results/** -text
-artifacts/** -text
-notebooks/** -text
+*.joblib binary

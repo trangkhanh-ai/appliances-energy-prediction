@@ -1,0 +1,104 @@
+{
+  "feature_set": "A_ar_calendar",
+  "point_method": "hgb_l1",
+  "features": [
+    "app_lag_0",
+    "app_lag_1",
+    "app_lag_2",
+    "app_lag_3",
+    "app_lag_6",
+    "app_lag_144",
+    "app_yday_window_sum",
+    "app_sum_1h",
+    "app_max_1h",
+    "app_mean_3h",
+    "app_std_3h",
+    "app_mean_24h",
+    "app_max_24h",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend"
+  ],
+  "rule": "Chọn theo MAE/bước có trọng số số origin trên hai lượt walk-forward (tháng 3; 1-14/4). Nếu chênh <1% thì chọn phương án đơn giản hơn. TEST không tham gia chọn.",
+  "folds": {
+    "walk_A_march": [
+      [
+        "2016-01-11 17:00",
+        "2016-03-01"
+      ],
+      [
+        "2016-03-01",
+        "2016-04-01"
+      ]
+    ],
+    "walk_B_april": [
+      [
+        "2016-01-11 17:00",
+        "2016-04-01"
+      ],
+      [
+        "2016-04-01",
+        "2016-04-15"
+      ]
+    ]
+  },
+  "point_parameters": {
+    "hgb_l1": {
+      "loss": "absolute_error",
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 40,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "hgb_l2": {
+      "loss": "squared_error",
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 40,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "xgb_l1": {
+      "objective": "reg:absoluteerror",
+      "tree_method": "hist",
+      "n_estimators": 300,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "min_child_weight": 20,
+      "random_state": 42,
+      "n_jobs": 2
+    },
+    "rf": {
+      "n_estimators": 300,
+      "min_samples_leaf": 10,
+      "max_features": 0.5,
+      "random_state": 42,
+      "n_jobs": 2
+    }
+  },
+  "feature_scores": {
+    "A_ar_calendar": 33.73668093679457,
+    "B_plus_lights": 33.821744671927654,
+    "C_plus_weather": 34.06485469006249,
+    "D_plus_house": 34.50595023220027
+  },
+  "method_scores": {
+    "persistence": 44.9270768913626,
+    "diurnal_median": 41.61964028035456,
+    "seasonal_day": 64.33570397856111,
+    "ridge": 40.90482980784966,
+    "hgb_l1": 33.73668093679457,
+    "hgb_l2": 41.17540695083926,
+    "xgb_l1": 33.74508014887147,
+    "rf": 40.207070065297636
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "test_origins": 3847,
+  "labels_checked": 23082,
+  "independent_counts": {
+    "tp": 82,
+    "fp": 349,
+    "fn": 38,
+    "tn": 3378
+  },
+  "mae_hour_Wh": 146.77674311082717,
+  "coverage": 0.833116714322849,
+  "online_200_max_abs_diff": 0.0,
+  "ridge_scratch_max_difference": {
+    "1.0": 1.0231815394945443e-12,
+    "100.0": 7.958078640513122e-13
+  },
+  "paired_block_bootstrap": {
+    "6": {
+      "replicates": 1000,
+      "mae_Wh_percentile95": [
+        129.17568187911533,
+        167.12751082583998
+      ],
+      "gain_percent_percentile95": [
+        22.606976904904972,
+        31.388202679191146
+      ]
+    },
+    "144": {
+      "replicates": 1000,
+      "mae_Wh_percentile95": [
+        115.32184322009161,
+        180.78456711020212
+      ],
+      "gain_percent_percentile95": [
+        23.9644051263717,
+        31.216821699082463
+      ]
+    }
+  },
+  "python": "3.12.3 (main, Apr 15 2024, 17:48:16) [MSC v.1929 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "packages": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "scipy": "1.18.1",
+    "joblib": "1.5.3",
+    "matplotlib": "3.10.8"
+  },
+  "data_sha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+  "model_sha256": "170b7068502d113fecf5281f1d0a87087d0a15be5e0fe84e282dd2bb29759f23",
+  "source_sha256": {
+    "appliances_core.py": "39b249d1425a53f088940d8b8601f200a633e1ff097e1c00d246020046e82095",
+    "demo_replay.py": "f7a0b9ba9a3c0c53c8778c8b9773cacddb33da78f089845d717d8f2e5d580309",
+    "draw_architecture.py": "2476433983a3738b5a0317f7ca4a0a7dee2fa2c2d7b4dff270e21b6ab06c3ee2",
+    "monitor_check.py": "52f8e3dc600b512680d0547be1dc157ae70bda316f569c843c4be244905c450e",
+    "ridge_scratch.py": "0f18492135b4d9615ba5b3fae588d54fb9cb8cc5f8085da8baf42a4701eb60cb",
+    "run_all.py": "04cc627066e284e96bc4b0531ce20d96037b603c7b8575e77beb923ba96dd9db",
+    "test_contract.py": "b6f65bc7b88ff0ea956c647b78dfd955fdfb407a38c3f3ae3fd8e52946741b6b",
+    "test_core.py": "b115b2ae56e541ad612204eba7f33e72f2bb75f263646c3788c876b474463c78",
+    "verify_results.py": "02b025efa12073cdceedaa3a14783b9ed3548395eb52e828fb022cdfda9a3f08"
+  }
+}

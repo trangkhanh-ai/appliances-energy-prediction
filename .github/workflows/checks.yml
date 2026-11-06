@@ -1,27 +1,31 @@
-name: Appliances reproducibility
+name: Verify Appliances
+
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     env:
-      OMP_NUM_THREADS: '1'
-      OPENBLAS_NUM_THREADS: '1'
-      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      OMP_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: "3.12"
           cache: pip
-      - run: python -m pip install -r requirements.txt
-      - run: python -X utf8 -m unittest discover -s tests -v
-      - run: python -X utf8 -m scripts.verify_results
-      - run: python -X utf8 -m scripts.show_results
+          cache-dependency-path: requirements-lock.txt
+      - name: Install the locked environment
+        run: python -m pip install -r requirements-lock.txt
+      - name: Check temporal leakage and invalid inputs
+        run: python -m unittest discover -v
+      - name: Verify frozen labels, predictions and metrics
+        run: python verify_results.py

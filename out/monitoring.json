@@ -1,0 +1,54 @@
+{
+  "reference": {
+    "mae_hour_calibration": 182.13134098182368,
+    "coverage_calibration": 0.8011314186248912,
+    "mae_factor": 1.2,
+    "coverage_drop": 0.1
+  },
+  "windows": [
+    {
+      "window": "2016-05-01 → 2016-05-07",
+      "origins": 1008,
+      "mae_hour": 134.98453080250192,
+      "mae_vs_ref": 0.7411384008640944,
+      "coverage": 0.8204365079365079,
+      "psi_appliances": 0.22655181302325378,
+      "breach": false
+    },
+    {
+      "window": "2016-05-08 → 2016-05-14",
+      "origins": 1008,
+      "mae_hour": 135.46104691660034,
+      "mae_vs_ref": 0.7437547331852076,
+      "coverage": 0.8501984126984127,
+      "psi_appliances": 0.9057346186529829,
+      "breach": false
+    },
+    {
+      "window": "2016-05-15 → 2016-05-21",
+      "origins": 1008,
+      "mae_hour": 136.9272107816648,
+      "mae_vs_ref": 0.7518047692589593,
+      "coverage": 0.8343253968253969,
+      "psi_appliances": 0.23264664677021785,
+      "breach": false
+    },
+    {
+      "window": "2016-05-22 → 2016-05-28",
+      "origins": 823,
+      "mae_hour": 187.1426001683827,
+      "mae_vs_ref": 1.0275145351675588,
+      "coverage": 0.8262454434993924,
+      "psi_appliances": 0.5159438139004728,
+      "breach": false
+    }
+  ],
+  "human_review_triggered": false,
+  "psi_natural_weekly_in_train": {
+    "n_weeks": 11,
+    "min": 0.011039980787260213,
+    "median": 0.058168456614575786,
+    "max": 0.3972195586862566
+  },
+  "note": "heuristic của prototype; PSI chỉ mô tả dịch chuyển phân bố đầu vào, không chứng minh drift hay lỗi cảm biến"
+}
