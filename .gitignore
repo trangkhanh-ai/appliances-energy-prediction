@@ -13,6 +13,9 @@
 !/test_core.py
 !/test_contract.py
 !/verify_results.py
+!/tools/
+/tools/*
+!/tools/check_project.py
 !/.github/
 /.github/*
 !/.github/workflows/

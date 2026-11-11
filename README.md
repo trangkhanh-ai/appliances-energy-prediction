@@ -1,9 +1,15 @@
 # Dự báo điện năng thiết bị trong tòa nhà với UCI Appliances
 
-[Kiểm thử tự động](.github/workflows/checks.yml)
+[![Kiểm tra dự án](https://github.com/trangkhanh-ai/appliances-energy-prediction/actions/workflows/checks.yml/badge.svg)](https://github.com/trangkhanh-ai/appliances-energy-prediction/actions/workflows/checks.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](#cài-môi-trường)
+[![Dữ liệu UCI](https://img.shields.io/badge/Dataset-UCI%20Appliances-006B54)](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction)
 
 Đồ án học phần **Ứng dụng AI trong công nghiệp**, sử dụng bộ dữ liệu
 **UCI Appliances Energy Prediction** trong danh sách đề xuất của giảng viên.
+
+Dự báo điện năng 60 phút tới, hiển thị dải bất định và hỗ trợ người dùng nhận biết
+nguy cơ tiêu thụ cao. Dữ liệu thuộc **một ngôi nhà năng lượng thấp tại Bỉ**;
+demo phát lại lịch sử trên máy cá nhân, chưa kết nối nhà máy hoặc công tơ thật.
 
 ## Nhóm thực hiện
 
@@ -17,10 +23,13 @@
 
 ![So sánh mô hình trên validation và test](out/figures/f41_model_comparison.png)
 
-Bản kiểm chứng ngày 05/11/2026, dùng UCI Appliances Energy Prediction.
+Phiên mô hình ngày 05/11/2026, kiểm chứng lại ngày 11/11/2026.
 Đầu vào là số đo đã có đến thời điểm t. Đầu ra gồm sáu giá trị Wh cho t+10 đến t+60,
 tổng điện năng giờ tới và P10/P50/P90 của tổng giờ. Cảnh báo nếu cận trên sau
-hiệu chỉnh vượt p95 TRAIN. Ngưỡng này không phải giới hạn công suất hợp đồng.
+hiệu chỉnh vượt p95 TRAIN, T = 1.720 Wh. Đây là ngưỡng thống kê điện năng,
+không phải công suất đỉnh kW hay giới hạn công suất hợp đồng.
+P50 là trung vị, không phải kỳ vọng toán học. Giả định số đo gắn timestamp t
+đã có khi phát dự báo; quy ước timestamp và độ trễ thiết bị chưa được xác nhận.
 
 ## Kết quả đã chạy
 
@@ -33,32 +42,60 @@ hiệu chỉnh vượt p95 TRAIN. Ngưỡng này không phải giới hạn côn
 - 15 unit test đạt; đủ 23.082 nhãn TEST kiểm lại; 200 origin online khớp batch.
 
 `out/results.json`, `out/test_predictions.csv`, `out/verification.json` là nguồn số liệu.
-Các con số ghi trong gói Master đầu vào không được coi là kết quả đã tái lập.
 Thời gian chạy phụ thuộc máy; không ép đúng thời gian tham chiếu.
+
+P90 thô có 338 FP, còn P90 cộng margin có 349 FP, cùng recall 68,33% trên TEST.
+Margin cải thiện độ phủ của dải nhưng không cải thiện mọi chỉ số cảnh báo.
+Giữ chính sách đã chốt để truy vết; chọn chính sách mới cần thực nghiệm mới.
 
 ## Cài môi trường
 
 Dùng Python 3.12 trên Windows. Mở PowerShell trong thư mục này:
 
 ```powershell
+git clone --config core.autocrlf=false https://github.com/trangkhanh-ai/appliances-energy-prediction.git
+cd appliances-energy-prediction
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements-lock.txt
+$env:PYTHONUTF8="1"
 $env:OMP_NUM_THREADS="2"
 $env:OPENBLAS_NUM_THREADS="2"
 $env:MKL_NUM_THREADS="2"
-.venv\Scripts\python -m unittest discover -v
 ```
 
-## Đọc kết quả và chạy demo sẵn
+Giữ nguyên byte của CSV và source để mã băm khớp phiên đã chốt.
+
+## Kiểm tra toàn bộ mà không ghi đè kết quả
 
 ```powershell
-.venv\Scripts\python verify_results.py
-.venv\Scripts\python demo_replay.py --steps 14
-Start-Process out\demo\dashboard.html
+.venv\Scripts\python tools/check_project.py
 ```
 
-Chỉ nạp `joblib` từ nguồn tin cậy. Model trong thư mục này được huấn luyện mới
-bằng code đi kèm, không nạp model nhận từ gói Master tham khảo.
+Lệnh này chạy trong **thư mục tạm**, giữ nguyên model và kết quả trong `out/`:
+
+1. Kiểm SHA-256 của CSV, model và chín tệp Python lõi trước khi nạp model.
+2. Chạy 15 kiểm thử về rò rỉ thời gian, chia tập, đầu vào và `NO_FORECAST`.
+3. Tính lại nhãn, dự báo, sai số, FP/FN và đối chiếu online/batch.
+4. Chạy demo 14 bước; đối chiếu SQLite với CSV dự đoán, kiểm actual chỉ xuất
+   hiện sau đủ 60 phút và không tự tạo xác nhận người dùng.
+
+Để lưu log, chọn **một thư mục mới**:
+
+```powershell
+.venv\Scripts\python tools/check_project.py --out runs\check-20261111
+```
+
+Thư mục này chứa log từng bước và `summary.json`. GitHub Actions chạy cùng lệnh
+kiểm tra trên mỗi push/PR. Không cần huấn luyện lại để kiểm model đã lưu.
+
+## Chạy demo sẵn
+
+```powershell
+.venv\Scripts\python demo_replay.py --start "2016-05-26 15:30" --steps 14 --out runs\demo-20261111
+Start-Process runs\demo-20261111\dashboard.html
+```
+
+Chỉ nạp `joblib` từ nguồn tin cậy. Model đi kèm được tạo bởi pipeline của repo.
 Demo là HTML tĩnh, không có server hoặc nút phê duyệt. Mặc định không tạo phản hồi.
 `--ack` chỉ là tham số mô phỏng CLI, không chứng minh người dùng đã nghiệm thu.
 SQLite chứa dự báo và chỉ điền actual khi đã tới đủ sáu phép đo tương lai.
@@ -70,8 +107,9 @@ Script tạo lại DB trong thư mục `--out`; dùng một thư mục mới đ�
 .venv\Scripts\python run_all.py
 .venv\Scripts\python monitor_check.py
 .venv\Scripts\python draw_architecture.py
-.venv\Scripts\python demo_replay.py --steps 14
 .venv\Scripts\python verify_results.py
+.venv\Scripts\python demo_replay.py --steps 14 --out runs\demo-retrained
+.venv\Scripts\python tools/check_project.py
 ```
 
 Các lệnh ghi đè kết quả trong `out/`; sao lưu thư mục trước khi muốn giữ một phiên.
@@ -87,12 +125,16 @@ quan sát trong phát triển và dùng lại cho kiểm chứng, chưa phải b
 | ridge_scratch.py | Ridge đa đầu ra viết bằng NumPy, đối chiếu thư viện |
 | run_all.py | Walk-forward, chọn phương án, fit, phân vị, stress test, lưu số liệu/hình |
 | verify_results.py | Tính lại độc lập nhãn, dự báo, metric; bootstrap theo khối |
+| tools/check_project.py | Kiểm mã băm, tests, dự báo và demo trong thư mục tạm |
 | test_core.py, test_contract.py | Kiểm rò rỉ, purge, đầu vào và NO_FORECAST |
 | demo_replay.py | Phát lại lịch sử, SQLite và HTML tĩnh |
 | monitor_check.py | MAE, độ phủ, PSI theo tuần sau khi nhãn đã đến |
 | draw_architecture.py | Sơ đồ 7 thành phần, phân biệt hành động đề xuất |
 | data/ | CSV gốc và mô tả biến |
 | out/ | Model, số liệu, chứng cứ kiểm tra và hình đã tạo |
+
+Các tệp lõi nằm cùng cấp để dễ lần theo luồng xử lý. Môi trường, cache, các phiên
+`runs/`, báo cáo Word và tài liệu nội bộ không thuộc gói source công khai.
 
 ## Giao diện và kiến trúc
 
@@ -116,6 +158,15 @@ quan sát trong phát triển và dùng lại cho kiểm chứng, chưa phải b
   Nhóm A cuối cùng không dùng chúng.
 - Dải hiệu chỉnh chỉ có độ phủ thực nghiệm, không cam kết xác suất đúng cho mỗi giờ.
 
+<details>
+<summary>Xem phân phối điện năng và nhịp sử dụng theo giờ</summary>
+
+![Phân phối điện năng và tổng giờ tới](out/figures/f32_distribution.png)
+
+![Trung bình điện năng theo giờ và thứ trong TRAIN](out/figures/f33_hour_weekday.png)
+
+</details>
+
 ## Giới hạn cần trình bày
 
 Precision thấp và nhóm tiêu thụ cao còn yếu. Cụm origin chồng lấp không phải
@@ -124,6 +175,13 @@ Wilson dựa trên giả định độc lập chưa hoàn toàn phù hợp; boot
 biến thiên trong giai đoạn đã có. Các tỷ lệ FP+r×FN là giả định, không phải tiền hoặc điện
 tiết kiệm. Chưa có can thiệp thật, công tơ chuẩn, biểu giá, hoặc nghiệm thu người dùng.
 Giám sát là batch ngoại tuyến; chưa kết nối thiết bị thật hay tự retrain.
+
+## Đối chiếu với báo cáo
+
+Báo cáo Master dùng phiên source
+[`8d6c1ba`](https://github.com/trangkhanh-ai/appliances-energy-prediction/tree/8d6c1ba0b5368426236a72f7d7240da90052410d).
+Bản dọn repo giữ nguyên chín tệp Python lõi, model, CSV và kết quả của phiên này;
+bổ sung công cụ kiểm tra, README và CI. Báo cáo và Master nội bộ được lưu riêng.
 
 ## Nguồn tham khảo
 
@@ -134,3 +192,6 @@ Giám sát là batch ngoại tuyến; chưa kết nối thiết bị thật hay 
 - [scikit-learn HGB](https://scikit-learn.org/1.9/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html).
 - [Conformalized Quantile Regression](https://arxiv.org/abs/1905.03222).
 - Künsch, 1989, DOI 10.1214/aos/1176347265: nền tảng bootstrap cho quan sát phụ thuộc.
+
+Giấy phép CC BY 4.0 áp dụng cho dữ liệu UCI. Repo chưa công bố giấy phép riêng
+cho mã nguồn.
