@@ -51,11 +51,13 @@ def verify(include_lstm=False):
     for key, value in point.items():
         if value is not None:
             np.testing.assert_allclose(value, results['selected'][key], atol=tolerance, rtol=0)
-    artifact = joblib.load(OUT/'finalists.joblib')
+    # The optional finalists archive includes PyTorch version metadata.
+    # Main HGB verification above must also work without research dependencies.
+    artifact = joblib.load(OUT/'finalists.joblib') if include_lstm else None
     finalist_checks = {}
     for label, config in lock['finalists'].items():
-        if config['method'] == 'lstm' and not include_lstm:
-            finalist_checks[label] = 'saved outputs only; use --include-lstm for independent inference'
+        if artifact is None:
+            finalist_checks[label] = 'saved outputs only; install research dependencies and use --include-lstm for independent finalist inference'
             continue
         model = artifact['models'][config['name']]
         if config['method'] == 'lstm':

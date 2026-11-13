@@ -86,7 +86,7 @@ Start-Process runs\demo-v2-moi\dashboard.html
 ```
 
 `v2.check` kiểm unit test, v1, model v2, notebook và demo trong thư mục tạm, không train lại.
-Nếu đã cài PyTorch, dùng `python -m v2.check --include-lstm` để kiểm suy luận độc lập của LSTM.
+Nếu đã cài PyTorch, dùng `python -m v2.check --include-lstm` để kiểm suy luận độc lập của toàn bộ ứng viên, kể cả LSTM.
 Demo HTML tĩnh/SQLite chỉ điền actual khi đủ 60 phút đã đến. Dùng thư mục mới mỗi phiên.
 Không tạo phản hồi người dùng giả hoặc gửi lệnh tới thiết bị.
 Tùy chọn `--ack viewed|inspected|ignored --operator "Tên tự khai"` chỉ ghi phản hồi CLI mô phỏng,
