@@ -23,7 +23,9 @@ demo phát lại lịch sử trên máy cá nhân, chưa kết nối nhà máy h
 
 ![So sánh mô hình trên validation và test](out/figures/f41_model_comparison.png)
 
-Phiên mô hình ngày 05/11/2026, kiểm chứng lại ngày 11/11/2026.
+Phiên **v1** giữ mô hình của thực nghiệm ngày 05/11/2026 (commit `8d6c1ba`).
+Lần đồng bộ báo cáo ngày 13/11/2026 bổ sung công cụ đối chiếu số liệu;
+không huấn luyện lại, đổi đặc trưng, trọng số hoặc ngưỡng để cải thiện TEST.
 Đầu vào là số đo đã có đến thời điểm t. Đầu ra gồm sáu giá trị Wh cho t+10 đến t+60,
 tổng điện năng giờ tới và P10/P50/P90 của tổng giờ. Cảnh báo nếu cận trên sau
 hiệu chỉnh vượt p95 TRAIN, T = 1.720 Wh. Đây là ngưỡng thống kê điện năng,
@@ -44,6 +46,13 @@ P50 là trung vị, không phải kỳ vọng toán học. Giả định số đ
 `out/results.json`, `out/test_predictions.csv`, `out/verification.json` là nguồn số liệu.
 Thời gian chạy phụ thuộc máy; không ép đúng thời gian tham chiếu.
 
+Fold A đánh giá tháng 3; fold B đánh giá 01–14/04 và **trùng với VALIDATION**.
+Đây là hai giai đoạn đánh giá, không phải hai fold cộng thêm một VAL độc lập.
+Mô hình điểm được chọn theo MAE từng bước trên hai fold, chưa tối ưu riêng nhóm cao.
+Sáu mô hình điểm và ba mô hình phân vị là hai bộ riêng: cảnh báo dùng P90 đã
+hiệu chỉnh, không dùng tổng sáu dự báo điểm. Thay mô hình điểm không tự làm
+cảnh báo P90 tốt hơn.
+
 P90 thô có 338 FP, còn P90 cộng margin có 349 FP, cùng recall 68,33% trên TEST.
 Margin cải thiện độ phủ của dải nhưng không cải thiện mọi chỉ số cảnh báo.
 Giữ chính sách đã chốt để truy vết; chọn chính sách mới cần thực nghiệm mới.
@@ -51,6 +60,10 @@ Giữ chính sách đã chốt để truy vết; chọn chính sách mới cần
 ## Cài môi trường
 
 Dùng Python 3.12 trên Windows. Mở PowerShell trong thư mục này:
+
+Nếu dùng gói `Source_Code_Appliances_v1.zip` đi kèm báo cáo, giải nén và mở
+PowerShell trong thư mục có README này; bắt đầu từ lệnh tạo `.venv`, bỏ qua
+hai lệnh `git clone` và `cd`. Gói ZIP đã có dữ liệu, model và các công cụ đồng bộ v1.
 
 ```powershell
 git clone --config core.autocrlf=false https://github.com/trangkhanh-ai/appliances-energy-prediction.git
@@ -78,6 +91,7 @@ Lệnh này chạy trong **thư mục tạm**, giữ nguyên model và kết qu�
 3. Tính lại nhãn, dự báo, sai số, FP/FN và đối chiếu online/batch.
 4. Chạy demo 14 bước; đối chiếu SQLite với CSV dự đoán, kiểm actual chỉ xuất
    hiện sau đủ 60 phút và không tự tạo xác nhận người dùng.
+5. Đối chiếu các số liệu dùng trong báo cáo và tính đủ chỉ số CAL từ model đã lưu.
 
 Để lưu log, chọn **một thư mục mới**:
 
@@ -87,6 +101,22 @@ Lệnh này chạy trong **thư mục tạm**, giữ nguyên model và kết qu�
 
 Thư mục này chứa log từng bước và `summary.json`. GitHub Actions chạy cùng lệnh
 kiểm tra trên mỗi push/PR. Không cần huấn luyện lại để kiểm model đã lưu.
+
+## Xuất số liệu đối chiếu báo cáo v1
+
+```powershell
+.venv\Scripts\python tools/export_v1_metrics.py
+```
+
+Đầu ra `out/v1_report_metrics.json` ghi MAE, các chỉ số CAL, nhóm tiêu thụ cao,
+hai quy tắc cảnh báo P90 và mã băm của dữ liệu/model/CSV dự báo.
+CAL được tính bằng suy luận từ mô hình đã lưu; TEST được đối chiếu với CSV dự báo.
+Lệnh không fit, tuning hay chọn lại mô hình; không ghi đè các kết quả gốc.
+
+MAE nhóm cao còn khoảng **1.201,77 Wh**, với **120 thời điểm thuộc 21 cụm**.
+Các cửa sổ một giờ chồng lấn nên 120 thời điểm không phải 120 sự kiện độc lập.
+Giảm MAE tổng thể 27,46% là giảm sai số dự báo, chưa chứng minh tiết kiệm điện
+hoặc tiền điện. Các thử nghiệm đặc trưng tăng tải và trọng số thuộc v2, chưa có trong v1.
 
 ## Chạy demo sẵn
 
@@ -108,6 +138,7 @@ Script tạo lại DB trong thư mục `--out`; dùng một thư mục mới đ�
 .venv\Scripts\python monitor_check.py
 .venv\Scripts\python draw_architecture.py
 .venv\Scripts\python verify_results.py
+.venv\Scripts\python tools/export_v1_metrics.py
 .venv\Scripts\python demo_replay.py --steps 14 --out runs\demo-retrained
 .venv\Scripts\python tools/check_project.py
 ```
@@ -126,6 +157,7 @@ quan sát trong phát triển và dùng lại cho kiểm chứng, chưa phải b
 | run_all.py | Walk-forward, chọn phương án, fit, phân vị, stress test, lưu số liệu/hình |
 | verify_results.py | Tính lại độc lập nhãn, dự báo, metric; bootstrap theo khối |
 | tools/check_project.py | Kiểm mã băm, tests, dự báo và demo trong thư mục tạm |
+| tools/export_v1_metrics.py | Xuất và đối chiếu số liệu báo cáo v1, bổ sung chỉ số CAL |
 | test_core.py, test_contract.py | Kiểm rò rỉ, purge, đầu vào và NO_FORECAST |
 | demo_replay.py | Phát lại lịch sử, SQLite và HTML tĩnh |
 | monitor_check.py | MAE, độ phủ, PSI theo tuần sau khi nhãn đã đến |

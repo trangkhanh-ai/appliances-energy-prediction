@@ -16,6 +16,7 @@
 !/tools/
 /tools/*
 !/tools/check_project.py
+!/tools/export_v1_metrics.py
 !/.github/
 /.github/*
 !/.github/workflows/
@@ -33,6 +34,7 @@
 !/out/test_predictions.csv
 !/out/monitoring.json
 !/out/verification.json
+!/out/v1_report_metrics.json
 !/out/figures/
 /out/figures/*
 !/out/figures/f*.png

@@ -119,13 +119,16 @@ def main():
         with TemporaryDirectory(prefix="appliances-check-") as temporary:
             folder = Path(temporary)
             files = [*SOURCE_FILES, "data/energydata_complete.csv", "out/bundle.joblib",
-                     "out/results.json", "out/test_predictions.csv"]
+                     "out/results.json", "out/test_predictions.csv", "out/verification.json",
+                     "tools/check_project.py", "tools/export_v1_metrics.py"]
             for name in files:
                 destination = folder / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT / name, destination)
             tests = run_step(folder, "unit-tests", ["-m", "unittest", "discover", "-v"], logs, environment)
             run_step(folder, "verify-results", ["verify_results.py"], logs, environment)
+            run_step(folder, "report-metrics", ["tools/export_v1_metrics.py"], logs, environment)
+            report_metrics = json.loads((folder / "out/v1_report_metrics.json").read_text(encoding="utf-8"))
             run_step(folder, "demo-replay", ["demo_replay.py", "--start", "2016-05-26 15:30",
                      "--steps", "14", "--out", str(folder / "replay")], logs, environment)
             demo = check_demo(folder)
@@ -142,6 +145,8 @@ def main():
             "online_200_max_abs_diff": verification["online_200_max_abs_diff"],
             "mae_hour_Wh": verification["mae_hour_Wh"], "coverage": verification["coverage"],
             "independent_counts": verification["independent_counts"], "demo": demo,
+            "report_metrics_checked": report_metrics["passed"],
+            "validation_is_fold_B": report_metrics["validation_is_fold_B"],
             "scope": "Kiểm model đã lưu trong thư mục tạm; không huấn luyện lại",
         }
         if logs is not None:

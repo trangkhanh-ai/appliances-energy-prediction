@@ -1,0 +1,79 @@
+{
+  "passed": true,
+  "version": "v1",
+  "experiment_commit": "8d6c1ba0b5368426236a72f7d7240da90052410d",
+  "scope": "Frozen-model verification; no fitting, tuning or new model selection. TEST is retrospective.",
+  "data_sha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+  "model_sha256": "170b7068502d113fecf5281f1d0a87087d0a15be5e0fe84e282dd2bb29759f23",
+  "predictions_sha256": "926eb2aa963175418fc311b10b7abe7582fd147e8631a701857d59c946461a4c",
+  "exporter_sha256": "3ae9a7ca79ecc87c41d2506035d1afb5f952acc0d2e3e7e3e30954124dd972af",
+  "feature_set": "A_ar_calendar",
+  "n_features": 18,
+  "point_method": "hgb_l1",
+  "threshold_Wh": 1720.0,
+  "margin_Wh": 10.903672925231604,
+  "validation_is_fold_B": true,
+  "calibration": {
+    "n": 2298,
+    "raw_coverage": 0.7480417754569191,
+    "calibrated_coverage": 0.8011314186248912,
+    "calibrated_mean_width": 577.5433885587612,
+    "fractions": [
+      0.10748476936466493,
+      0.4934725848563969,
+      0.855526544821584
+    ],
+    "pinball": [
+      28.24292573863901,
+      94.11318225735083,
+      64.03746851882474
+    ],
+    "crossing_rows": 20
+  },
+  "point_test": {
+    "mae_step": 29.186906844473935,
+    "rmse_step": 73.22079203938033,
+    "mae_hour": 146.77674311082717,
+    "rmse_hour": 312.05320771234165,
+    "bias_hour": -86.4537716673476,
+    "r2_hour": 0.41365609964854133
+  },
+  "high_group_test": {
+    "n": 120,
+    "episodes": 21,
+    "mae_hour": 1201.766808680073,
+    "underprediction_rate": 0.9833333333333333,
+    "coverage": 0.35833333333333334
+  },
+  "mae_hour_reduction_percent": 27.4554980731866,
+  "alerts_test": {
+    "ai_raw_p90": {
+      "n": 3847,
+      "positives": 120,
+      "tp": 82,
+      "fp": 338,
+      "fn": 38,
+      "tn": 3389,
+      "alerts": 420,
+      "precision": 0.19523809523809524,
+      "recall": 0.6833333333333333,
+      "f1": 0.30370370370370375,
+      "auc_roc": 0.9217780162776138,
+      "auc_pr": 0.28649926274722104
+    },
+    "ai_calibrated_upper": {
+      "n": 3847,
+      "positives": 120,
+      "tp": 82,
+      "fp": 349,
+      "fn": 38,
+      "tn": 3378,
+      "alerts": 431,
+      "precision": 0.1902552204176334,
+      "recall": 0.6833333333333333,
+      "f1": 0.2976406533575317,
+      "auc_roc": 0.9217780162776138,
+      "auc_pr": 0.28649926274722104
+    }
+  }
+}
