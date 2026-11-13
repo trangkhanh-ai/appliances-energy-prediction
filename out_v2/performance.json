@@ -1,0 +1,13 @@
+{
+  "n": 200,
+  "p50_ms": 46.289350000733975,
+  "p95_ms": 61.2603049921745,
+  "max_ms": 73.0489999987185,
+  "reference_max_abs_diff_Wh": 0.0,
+  "reference_path_p95_ms_recorded": 178.05228499710205,
+  "reference_p50_ms_same_origins": 113.26634999568341,
+  "reference_p95_ms_same_origins": 144.62146000660138,
+  "model_sha256": "625b449a125a293eedf229ec8b77e986cd32ebe9d8e57786d75075cc1721b90b",
+  "scope": "serve.forecast_one; loaded model; input validation + one feature build + required models; 2 threads; excludes file/SQLite/UI",
+  "note": "Equivalent inference refactor after model lock; no fitting or threshold change"
+}

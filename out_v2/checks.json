@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "include_lstm": true,
+  "unit_tests": 29,
+  "notebooks_executed": 3,
+  "demo_forecasts": 14,
+  "actuals_available": 8,
+  "fabricated_acknowledgements": 0,
+  "scope": "No fitting or tuning; original v1 preserved"
+}

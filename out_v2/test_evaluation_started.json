@@ -1,0 +1,42 @@
+{
+  "selection_lock_sha256": "30e214750d25cda4223a1e0d3328ba39429a2907ca7cdd2ce728be2f94758841",
+  "protocol": {
+    "seed": 42,
+    "folds": {
+      "walk_A_march": [
+        [
+          "2016-01-11 17:00",
+          "2016-03-01"
+        ],
+        [
+          "2016-03-01",
+          "2016-04-01"
+        ]
+      ],
+      "walk_B_april": [
+        [
+          "2016-01-11 17:00",
+          "2016-04-01"
+        ],
+        [
+          "2016-04-01",
+          "2016-04-15"
+        ]
+      ]
+    },
+    "high_quantile_train": 0.95,
+    "high_mae_improvement_min": 0.05,
+    "overall_mae_increase_max": 0.03,
+    "alert_fp_increase_max": 0.2,
+    "policy_target_fpr": 0.1,
+    "policy_target_recall": 0.7,
+    "policy_development_split": "First half for calibration, second half for assessment, purge 60min at boundary",
+    "random_search_candidates": 24,
+    "random_search_target": "direct hour",
+    "lstm_max_epochs": 30,
+    "external_validation": "Not available: one house and no unused later period supplied",
+    "test_status": "Retrospective: TEST already observed during v1 development; no new generalization claim",
+    "production_rule": "Point must pass high MAE and overall MAE gates on BOTH folds. Policy must not reduce recall or increase FP by >20% versus v1 on BOTH development assessment halves. Unchanged v1 policy is an admissible fallback, not an alert improvement."
+  },
+  "model_sha256": "625b449a125a293eedf229ec8b77e986cd32ebe9d8e57786d75075cc1721b90b"
+}

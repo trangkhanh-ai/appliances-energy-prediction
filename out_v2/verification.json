@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "version": "v2",
+  "data_sha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+  "labels_checked": 23082,
+  "online_origins_checked": 200,
+  "online_max_abs_diff": 0.0,
+  "tolerance_Wh": 1e-09,
+  "counts": {
+    "tp": 82,
+    "fp": 349,
+    "fn": 38,
+    "tn": 3378
+  },
+  "finalists": {
+    "v1": "fresh inference matches saved predictions",
+    "selected": "fresh inference matches saved predictions",
+    "best_multi": "fresh inference matches saved predictions",
+    "best_direct": "fresh inference matches saved predictions",
+    "lstm": "fresh inference matches saved predictions"
+  },
+  "sha256": {
+    "v2/__init__.py": "2d528633ea6ccb293aea9d2b2f11980cc3008d70651750883564b77cd8a7259e",
+    "v2/analysis.py": "c8bde7e492e4f0164588545aa08e4cb8da3a815df9ed8efd306abfd77f3514e3",
+    "v2/check.py": "c9161187efd423d8422a9e5b4a3b725460c4d093f28d8cad8ba238955cc931f6",
+    "v2/core.py": "cf2f7f354ec0961a2e8f1f0f95b6779a31fb313e52aa38f154cd636289451fb6",
+    "v2/demo.py": "68f823e95bebf31d5e239526e586cf2557db008686b2ac20b0eae0ef488b2a36",
+    "v2/lstm.py": "45ca46f7f9a3a3170800deeda38632ec387879476ca4af178358ce7008f9a1da",
+    "v2/metrics.py": "4b0b1f5c79d0ce1b3779b2b191c9c1ed172b4c9efc12a9b08d1b26cafa5943dd",
+    "v2/plots.py": "8345391f012245da842dbcc3b72c90eaef1f2f6633260ee09f20067939402466",
+    "v2/run.py": "0671d4a916c7d3ef4f8f61587379879c79a65d003cea72d4b313d2c2a0d264fa",
+    "v2/runtime.py": "1159d5ed9e56a858ea1898c67b10f4250b32734a530d6dfd482f8f280b7002c8",
+    "v2/serve.py": "02a800e3b219aeec6bf7cbb98a5b7e8385a1633b6b4b90fb76707ea9534d7993",
+    "v2/verify.py": "8d6824483eb20bec6aff1e8cac3ed9f658f12bfe9464902a894fe7923a4c1612",
+    "out_v2/bundle.joblib": "625b449a125a293eedf229ec8b77e986cd32ebe9d8e57786d75075cc1721b90b",
+    "out_v2/finalists.joblib": "44a84f391b018986f720aa2fa590a14a61384b39e513252878f7e04e668a2e1c",
+    "out_v2/results.json": "abd4f6628195515f4af54ca0d9050348091549eeffdf3ff08422f4d8ba5404b6",
+    "out_v2/selection_lock.json": "30e214750d25cda4223a1e0d3328ba39429a2907ca7cdd2ce728be2f94758841",
+    "out_v2/test_predictions.csv": "25ef8363c7e8327bf64e62cd77884ab9e8da892fef3147df169c3610935cc983"
+  },
+  "test_status": "retrospective; no retuning"
+}

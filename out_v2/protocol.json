@@ -1,0 +1,48 @@
+{
+  "seed": 42,
+  "folds": {
+    "walk_A_march": [
+      [
+        "2016-01-11 17:00",
+        "2016-03-01"
+      ],
+      [
+        "2016-03-01",
+        "2016-04-01"
+      ]
+    ],
+    "walk_B_april": [
+      [
+        "2016-01-11 17:00",
+        "2016-04-01"
+      ],
+      [
+        "2016-04-01",
+        "2016-04-15"
+      ]
+    ]
+  },
+  "high_quantile_train": 0.95,
+  "high_mae_improvement_min": 0.05,
+  "overall_mae_increase_max": 0.03,
+  "alert_fp_increase_max": 0.2,
+  "policy_target_fpr": 0.1,
+  "policy_target_recall": 0.7,
+  "policy_development_split": "First half for calibration, second half for assessment, purge 60min at boundary",
+  "random_search_candidates": 24,
+  "random_search_target": "direct hour",
+  "lstm_max_epochs": 30,
+  "external_validation": "Not available: one house and no unused later period supplied",
+  "test_status": "Retrospective: TEST already observed during v1 development; no new generalization claim",
+  "production_rule": "Point must pass high MAE and overall MAE gates on BOTH folds. Policy must not reduce recall or increase FP by >20% versus v1 on BOTH development assessment halves. Unchanged v1 policy is an admissible fallback, not an alert improvement.",
+  "source_sha256": {
+    "appliances_core.py": "39b249d1425a53f088940d8b8601f200a633e1ff097e1c00d246020046e82095",
+    "data/energydata_complete.csv": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+    "v2/__init__.py": "2d528633ea6ccb293aea9d2b2f11980cc3008d70651750883564b77cd8a7259e",
+    "v2/core.py": "cf2f7f354ec0961a2e8f1f0f95b6779a31fb313e52aa38f154cd636289451fb6",
+    "v2/metrics.py": "4b0b1f5c79d0ce1b3779b2b191c9c1ed172b4c9efc12a9b08d1b26cafa5943dd",
+    "v2/lstm.py": "45ca46f7f9a3a3170800deeda38632ec387879476ca4af178358ce7008f9a1da",
+    "v2/runtime.py": "1159d5ed9e56a858ea1898c67b10f4250b32734a530d6dfd482f8f280b7002c8",
+    "v2/run.py": "0671d4a916c7d3ef4f8f61587379879c79a65d003cea72d4b313d2c2a0d264fa"
+  }
+}

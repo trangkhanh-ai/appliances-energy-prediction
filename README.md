@@ -1,69 +1,56 @@
-# Dự báo điện năng thiết bị trong tòa nhà với UCI Appliances
+# Dự báo điện năng thiết bị trong tòa nhà
 
 [![Kiểm tra dự án](https://github.com/trangkhanh-ai/appliances-energy-prediction/actions/workflows/checks.yml/badge.svg)](https://github.com/trangkhanh-ai/appliances-energy-prediction/actions/workflows/checks.yml)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](#cài-môi-trường)
-[![Dữ liệu UCI](https://img.shields.io/badge/Dataset-UCI%20Appliances-006B54)](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction)
 
-Đồ án học phần **Ứng dụng AI trong công nghiệp**, sử dụng bộ dữ liệu
-**UCI Appliances Energy Prediction** trong danh sách đề xuất của giảng viên.
-
-Dự báo điện năng 60 phút tới, hiển thị dải bất định và hỗ trợ người dùng nhận biết
-nguy cơ tiêu thụ cao. Dữ liệu thuộc **một ngôi nhà năng lượng thấp tại Bỉ**;
-demo phát lại lịch sử trên máy cá nhân, chưa kết nối nhà máy hoặc công tơ thật.
-
-## Nhóm thực hiện
+Đồ án **Ứng dụng AI trong công nghiệp**, dùng **UCI Appliances Energy Prediction**.
+Dự báo sáu khoảng 10 phút tiếp theo, tổng điện năng giờ tới và cảnh báo tiêu thụ cao.
+Dữ liệu thuộc **một ngôi nhà năng lượng thấp tại Bỉ**, không phải khu công nghiệp.
+Đơn vị mục tiêu là **Wh**; chưa đo công suất đỉnh, tiền tiết kiệm hoặc hiệu quả điều khiển thiết bị.
 
 | Thành viên | Phần phụ trách |
 |---|---|
-| **Nguyễn Bảo Duy** | Trưởng nhóm; xác định bài toán, dữ liệu, baseline và mô hình |
-| **Trang Mai Quốc Khánh** | Đánh giá, phân tích lỗi và giới hạn ứng dụng công nghiệp |
-| **Lê Trần Nhật Huy** | Demo, lưu trữ dữ liệu và giám sát |
+| Nguyễn Bảo Duy | Trưởng nhóm; bài toán, dữ liệu, baseline, mô hình |
+| Trang Mai Quốc Khánh | Đánh giá, phân tích lỗi, giới hạn ứng dụng |
+| Lê Trần Nhật Huy | Demo, lưu trữ và giám sát |
 
-## Bài toán
+## Kết quả chính
 
-![So sánh mô hình trên validation và test](out/figures/f41_model_comparison.png)
+V2 được chọn bằng dữ liệu phát triển: **HGB-L1, 22 đặc trưng, trọng số nhóm cao 4**.
+V1 giữ nguyên tại tag `v1.0.0` và `out/`; phần mới nằm trong `v2/`, `out_v2/`.
+Cảnh báo vẫn dùng bộ phân vị 18 đặc trưng của v1: **P90 + margin > 1.720 Wh**.
 
-Phiên **v1** giữ mô hình của thực nghiệm ngày 05/11/2026 (commit `8d6c1ba`).
-Lần đồng bộ báo cáo ngày 13/11/2026 bổ sung công cụ đối chiếu số liệu;
-không huấn luyện lại, đổi đặc trưng, trọng số hoặc ngưỡng để cải thiện TEST.
-Đầu vào là số đo đã có đến thời điểm t. Đầu ra gồm sáu giá trị Wh cho t+10 đến t+60,
-tổng điện năng giờ tới và P10/P50/P90 của tổng giờ. Cảnh báo nếu cận trên sau
-hiệu chỉnh vượt p95 TRAIN, T = 1.720 Wh. Đây là ngưỡng thống kê điện năng,
-không phải công suất đỉnh kW hay giới hạn công suất hợp đồng.
-P50 là trung vị, không phải kỳ vọng toán học. Giả định số đo gắn timestamp t
-đã có khi phát dự báo; quy ước timestamp và độ trễ thiết bị chưa được xác nhận.
+![So sánh các mô hình đã khóa](out_v2/figures/f_v2_models.png)
 
-## Kết quả đã chạy
+| Chỉ số TEST hồi cứu | V1 | V2 được chọn |
+|---|---:|---:|
+| MAE tổng giờ (Wh) | 146,777 | 153,546 |
+| RMSE tổng giờ (Wh) | 312,053 | 296,281 |
+| MAE nhóm cao (Wh) | 1.201,767 | 905,608 |
+| Bias dự báo − thực tế (Wh) | −86,454 | −26,910 |
+| Tỷ lệ dự báo thấp nhóm cao | 98,33% | 93,33% |
+| TP / FP / FN / TN | 82 / 349 / 38 / 3.378 | Giữ nguyên |
 
-- 19.735 hàng gốc, bước 10 phút; CSV giữ nguyên và kiểm SHA-256.
-- TRAIN 11.412, VALIDATION 2.010, CAL 2.298, TEST 3.847 origin hợp lệ.
-- Chọn A_ar_calendar (18 biến) và HGB-L1 theo hai fold walk-forward.
-- MAE tổng giờ TEST: 146,776743 Wh; persistence: 202,326488 Wh; giảm khoảng 27,46%.
-- Cảnh báo: TP 82, FP 349, FN 38, TN 3.378; precision 19,03%, recall 68,33%.
-- Độ phủ dải TEST 83,31%; nhóm cao chỉ 35,83%.
-- 15 unit test đạt; đủ 23.082 nhãn TEST kiểm lại; 200 origin online khớp batch.
+MAE nhóm cao giảm **24,64%**, RMSE giảm **5,05%**, nhưng MAE toàn bộ tăng **4,61%** so với v1.
+Không đổi lựa chọn sau khi xem TEST. So với persistence, MAE của v2 giảm **24,11%**;
+đây là giảm sai số, chưa phải điện tiết kiệm. Precision **19,03%**, recall **68,33%**;
+độ phủ **83,31% toàn TEST**, **35,83% nhóm cao**.
 
-`out/results.json`, `out/test_predictions.csv`, `out/verification.json` là nguồn số liệu.
-Thời gian chạy phụ thuộc máy; không ép đúng thời gian tham chiếu.
+## Phạm vi thực nghiệm
 
-Fold A đánh giá tháng 3; fold B đánh giá 01–14/04 và **trùng với VALIDATION**.
-Đây là hai giai đoạn đánh giá, không phải hai fold cộng thêm một VAL độc lập.
-Mô hình điểm được chọn theo MAE từng bước trên hai fold, chưa tối ưu riêng nhóm cao.
-Sáu mô hình điểm và ba mô hình phân vị là hai bộ riêng: cảnh báo dùng P90 đã
-hiệu chỉnh, không dùng tổng sáu dự báo điểm. Thay mô hình điểm không tự làm
-cảnh báo P90 tốt hơn.
+- 60 cấu hình cây/baseline, gồm 24 cấu hình random search; thêm một LSTM nhỏ, đều chấm trên hai fold.
+- VAL trùng fold B. Ngưỡng nhóm cao chỉ lấy từ TRAIN: 1780 Wh ở A, 1720 Wh ở B.
+- Bốn đặc trưng mới: diff 10/30 phút, độ lệch chuẩn 1 giờ, tỷ lệ max 1 giờ/mean 24 giờ.
+- HGB-L1/L2 với trọng số 1/2/4/8; so tổng sáu bước với học trực tiếp tổng giờ.
+- LSTM: 18 bước lịch sử, 24 hidden units; chọn epoch trong TRAIN có purge. Phiên đã chạy:
+  PyTorch 2.11.0+cu128, RTX 5060 Laptop GPU, 30 epoch. LSTM không được chọn.
+- So chính sách cảnh báo bằng ngưỡng học trên đoạn calibration và đánh giá ở đoạn thời gian sau.
+- Bootstrap theo khối, phân tích lỗi/đợt cao, robustness, độ trễ và giám sát theo tuần.
 
-P90 thô có 338 FP, còn P90 cộng margin có 349 FP, cùng recall 68,33% trên TEST.
-Margin cải thiện độ phủ của dải nhưng không cải thiện mọi chỉ số cảnh báo.
-Giữ chính sách đã chốt để truy vết; chọn chính sách mới cần thực nghiệm mới.
+![Kiến trúc](out_v2/figures/f_v2_architecture.png)
 
 ## Cài môi trường
 
-Dùng Python 3.12 trên Windows. Mở PowerShell trong thư mục này:
-
-Nếu dùng gói `Source_Code_Appliances_v1.zip` đi kèm báo cáo, giải nén và mở
-PowerShell trong thư mục có README này; bắt đầu từ lệnh tạo `.venv`, bỏ qua
-hai lệnh `git clone` và `cd`. Gói ZIP đã có dữ liệu, model và các công cụ đồng bộ v1.
+Dùng Python 3.12. Với ZIP đi kèm báo cáo, giải nén tại thư mục có README và bỏ qua clone/cd.
 
 ```powershell
 git clone --config core.autocrlf=false https://github.com/trangkhanh-ai/appliances-energy-prediction.git
@@ -76,154 +63,93 @@ $env:OPENBLAS_NUM_THREADS="2"
 $env:MKL_NUM_THREADS="2"
 ```
 
-Giữ nguyên byte của CSV và source để mã băm khớp phiên đã chốt.
-
-## Kiểm tra toàn bộ mà không ghi đè kết quả
-
-```powershell
-.venv\Scripts\python tools/check_project.py
-```
-
-Lệnh này chạy trong **thư mục tạm**, giữ nguyên model và kết quả trong `out/`:
-
-1. Kiểm SHA-256 của CSV, model và chín tệp Python lõi trước khi nạp model.
-2. Chạy 15 kiểm thử về rò rỉ thời gian, chia tập, đầu vào và `NO_FORECAST`.
-3. Tính lại nhãn, dự báo, sai số, FP/FN và đối chiếu online/batch.
-4. Chạy demo 14 bước; đối chiếu SQLite với CSV dự đoán, kiểm actual chỉ xuất
-   hiện sau đủ 60 phút và không tự tạo xác nhận người dùng.
-5. Đối chiếu các số liệu dùng trong báo cáo và tính đủ chỉ số CAL từ model đã lưu.
-
-Để lưu log, chọn **một thư mục mới**:
+Mô hình chính HGB chạy CPU, không cần GPU cho demo. Chỉ nạp joblib từ nguồn tin cậy.
+Giữ byte CSV/source để mã băm khớp. Để chạy LSTM và thực thi notebook, cài thêm:
 
 ```powershell
-.venv\Scripts\python tools/check_project.py --out runs\check-20261111
+.venv\Scripts\python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+.venv\Scripts\python -m pip install -r requirements-research.txt
 ```
 
-Thư mục này chứa log từng bước và `summary.json`. GitHub Actions chạy cùng lệnh
-kiểm tra trên mỗi push/PR. Không cần huấn luyện lại để kiểm model đã lưu.
-
-## Xuất số liệu đối chiếu báo cáo v1
+Với GPU NVIDIA tương thích CUDA 12.8, thay dòng cài torch bằng:
 
 ```powershell
-.venv\Scripts\python tools/export_v1_metrics.py
+.venv\Scripts\python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
 ```
 
-Đầu ra `out/v1_report_metrics.json` ghi MAE, các chỉ số CAL, nhóm tiêu thụ cao,
-hai quy tắc cảnh báo P90 và mã băm của dữ liệu/model/CSV dự báo.
-CAL được tính bằng suy luận từ mô hình đã lưu; TEST được đối chiếu với CSV dự báo.
-Lệnh không fit, tuning hay chọn lại mô hình; không ghi đè các kết quả gốc.
-
-MAE nhóm cao còn khoảng **1.201,77 Wh**, với **120 thời điểm thuộc 21 cụm**.
-Các cửa sổ một giờ chồng lấn nên 120 thời điểm không phải 120 sự kiện độc lập.
-Giảm MAE tổng thể 27,46% là giảm sai số dự báo, chưa chứng minh tiết kiệm điện
-hoặc tiền điện. Các thử nghiệm đặc trưng tăng tải và trọng số thuộc v2, chưa có trong v1.
-
-## Chạy demo sẵn
+## Kiểm kết quả và chạy demo
 
 ```powershell
-.venv\Scripts\python demo_replay.py --start "2016-05-26 15:30" --steps 14 --out runs\demo-20261111
-Start-Process runs\demo-20261111\dashboard.html
+.venv\Scripts\python -m v2.check
+.venv\Scripts\python -m v2.demo --out runs\demo-v2-moi
+Start-Process runs\demo-v2-moi\dashboard.html
 ```
 
-Chỉ nạp `joblib` từ nguồn tin cậy. Model đi kèm được tạo bởi pipeline của repo.
-Demo là HTML tĩnh, không có server hoặc nút phê duyệt. Mặc định không tạo phản hồi.
-`--ack` chỉ là tham số mô phỏng CLI, không chứng minh người dùng đã nghiệm thu.
-SQLite chứa dự báo và chỉ điền actual khi đã tới đủ sáu phép đo tương lai.
-Script tạo lại DB trong thư mục `--out`; dùng một thư mục mới để giữ phiên cũ.
+`v2.check` kiểm unit test, v1, model v2, notebook và demo trong thư mục tạm, không train lại.
+Nếu đã cài PyTorch, dùng `python -m v2.check --include-lstm` để kiểm suy luận độc lập của LSTM.
+Demo HTML tĩnh/SQLite chỉ điền actual khi đủ 60 phút đã đến. Dùng thư mục mới mỗi phiên.
+Không tạo phản hồi người dùng giả hoặc gửi lệnh tới thiết bị.
+Tùy chọn `--ack viewed|inspected|ignored --operator "Tên tự khai"` chỉ ghi phản hồi CLI mô phỏng,
+không chứng minh người dùng đã nghiệm thu hoặc tác động lên thiết bị. Mặc định không ghi phản hồi.
 
-## Huấn luyện lại toàn bộ
+![Minh họa từ nhật ký thật của demo](out_v2/figures/f_v2_demo.png)
 
-```powershell
-.venv\Scripts\python run_all.py
-.venv\Scripts\python monitor_check.py
-.venv\Scripts\python draw_architecture.py
-.venv\Scripts\python verify_results.py
-.venv\Scripts\python tools/export_v1_metrics.py
-.venv\Scripts\python demo_replay.py --steps 14 --out runs\demo-retrained
-.venv\Scripts\python tools/check_project.py
-```
+## Notebook và số liệu
 
-Các lệnh ghi đè kết quả trong `out/`; sao lưu thư mục trước khi muốn giữ một phiên.
-Thực nghiệm chính chạy CPU, giới hạn hai luồng; không có kết quả GPU trong bản này.
-Không chỉnh siêu tham số theo TEST. VALIDATION đã tham gia lựa chọn; TEST đã được
-quan sát trong phát triển và dùng lại cho kiểm chứng, chưa phải bằng chứng ngoài mẫu mới.
-
-## Các tệp chính
-
-| Tệp | Nhiệm vụ |
+| Notebook đã thực thi | Nội dung |
 |---|---|
-| appliances_core.py | Đọc và kiểm dữ liệu, đặc trưng, nhãn, mô hình, metric, suy luận |
-| ridge_scratch.py | Ridge đa đầu ra viết bằng NumPy, đối chiếu thư viện |
-| run_all.py | Walk-forward, chọn phương án, fit, phân vị, stress test, lưu số liệu/hình |
-| verify_results.py | Tính lại độc lập nhãn, dự báo, metric; bootstrap theo khối |
-| tools/check_project.py | Kiểm mã băm, tests, dự báo và demo trong thư mục tạm |
-| tools/export_v1_metrics.py | Xuất và đối chiếu số liệu báo cáo v1, bổ sung chỉ số CAL |
-| test_core.py, test_contract.py | Kiểm rò rỉ, purge, đầu vào và NO_FORECAST |
-| demo_replay.py | Phát lại lịch sử, SQLite và HTML tĩnh |
-| monitor_check.py | MAE, độ phủ, PSI theo tuần sau khi nhãn đã đến |
-| draw_architecture.py | Sơ đồ 7 thành phần, phân biệt hành động đề xuất |
-| data/ | CSV gốc và mô tả biến |
-| out/ | Model, số liệu, chứng cứ kiểm tra và hình đã tạo |
+| `01_du_lieu_va_tien_xu_ly.ipynb` | Dataset, đặc trưng và kiểm rò rỉ |
+| `02_thuc_nghiem_va_chon_mo_hinh.ipynb` | Fold, tuning, trọng số, lựa chọn đã khóa |
+| `03_ket_qua_va_demo.ipynb` | Tính lại metric từ CSV, biểu đồ và giới hạn |
 
-Các tệp lõi nằm cùng cấp để dễ lần theo luồng xử lý. Môi trường, cache, các phiên
-`runs/`, báo cáo Word và tài liệu nội bộ không thuộc gói source công khai.
+Notebook đọc kết quả, không tự train lại TEST. Tạo lại bằng `python tools/build_notebooks.py`.
+Đối chiếu số liệu tại `out_v2/development.json`, `selection_lock.json`, `results.json`,
+`test_predictions.csv`, `supplement.json`, `performance.json`, `verification.json`.
 
-## Giao diện và kiến trúc
+## Tái lập toàn bộ nghiên cứu
 
-![Dự báo và cảnh báo trong phiên phát lại](out/figures/f61_dashboard.png)
+Phiên đi kèm đã khóa TEST. Trước khi chạy lại, đổi tên `out_v2` thành tên sao lưu mới:
 
-<details>
-<summary>Xem luồng dữ liệu → AI → hỗ trợ quyết định</summary>
+```powershell
+Rename-Item -LiteralPath out_v2 -NewName out_v2_saved
+.venv\Scripts\python -m v2.run development --include-lstm
+.venv\Scripts\python -m v2.run final
+.venv\Scripts\python -m v2.verify --include-lstm
+.venv\Scripts\python -m v2.analysis
+.venv\Scripts\python -m v2.demo
+.venv\Scripts\python -m v2.plots
+.venv\Scripts\python tools/build_notebooks.py
+.venv\Scripts\python -m v2.check --include-lstm
+```
 
-![Kiến trúc và giới hạn triển khai](out/figures/f51_architecture.png)
+Development không tạo nhãn CAL/TEST; final dùng cấu hình đã khóa, fit TRAIN, hiệu chỉnh CAL rồi chấm TEST.
+TEST từng được xem ở v1 nên đây vẫn là đánh giá hồi cứu. GPU có thể khác số thực giữa môi trường.
 
-</details>
+## Tổ chức source
 
-## Vì sao xử lý dữ liệu như vậy
+| Tệp | Vai trò |
+|---|---|
+| `appliances_core.py`, `run_all.py`, `ridge_scratch.py` | Lõi v1 giữ nguyên |
+| `v2/core.py` | Đặc trưng, trọng số TRAIN, mô hình tổng giờ |
+| `v2/run.py` | Development/final, tuning và khóa lựa chọn |
+| `v2/lstm.py` | LSTM nhỏ và chọn epoch trong TRAIN |
+| `v2/metrics.py` | Nhóm cao, cảnh báo, dải dự báo, bootstrap |
+| `v2/runtime.py`, `v2/serve.py` | Suy luận tham chiếu và phục vụ đã bỏ tính lặp |
+| `v2/verify.py`, `v2/check.py` | Đối chiếu model, nhãn, số liệu, notebook, demo |
+| `v2/demo.py`, `v2/analysis.py`, `v2/plots.py` | Demo, phân tích và hình từ kết quả đã khóa |
+| `test_core.py`, `test_contract.py`, `test_v2.py` | Kiểm nhân quả, purge, đầu vào/đầu ra |
+| `data/`, `out/`, `out_v2/`, `notebooks/` | CSV gốc, kết quả v1/v2, notebook có output |
 
-- Không impute/cắt đỉnh trên CSV nguồn vì không có ô thiếu; đỉnh hợp lệ là đối tượng cần đánh giá.
-- Lag/rolling chỉ kết thúc tại t; lịch của t+10 biết trước. 145 hàng là lịch sử tối thiểu.
-- Không chia ngẫu nhiên; purge nhãn vượt biên. Scaler chỉ học phần train từng fold.
-- Chỉ Ridge cần StandardScaler. Không mã hóa chung mọi cột, không dùng SMOTE cho chuỗi hồi quy.
-- rv1/rv2 là biến ngẫu nhiên. Nhóm có rv1 chỉ làm đối chứng, không đủ chứng minh mức nhiễu.
-- Thời tiết trạm có nội suy, chưa rõ độ trễ công bố; C–E chỉ khảo sát ngoại tuyến.
-  Nhóm A cuối cùng không dùng chúng.
-- Dải hiệu chỉnh chỉ có độ phủ thực nghiệm, không cam kết xác suất đúng cho mỗi giờ.
+## Giới hạn và nguồn dữ liệu
 
-<details>
-<summary>Xem phân phối điện năng và nhịp sử dụng theo giờ</summary>
+- Một ngôi nhà, khoảng 4,5 tháng; chưa có nhà/mùa mới để kiểm ngoài mẫu.
+- Giả định số đo tại t đã có. Múi giờ/độ trễ công bố chưa được xác nhận.
+- 120 thời điểm cao tạo 21 cụm cửa sổ chồng lấn, không phải 120 sự kiện độc lập.
+- V2 vẫn dự báo thiếu ở 93,33% thời điểm cao; dải dự báo không bảo đảm an toàn.
+- FPR mục tiêu CAL không bảo đảm FPR TEST giống hệt. Báo nhầm còn nhiều.
+- Chưa có tải điều khiển, biểu giá, can thiệp hoặc nghiệm thu người dùng; chưa đo tiết kiệm thực tế.
 
-![Phân phối điện năng và tổng giờ tới](out/figures/f32_distribution.png)
-
-![Trung bình điện năng theo giờ và thứ trong TRAIN](out/figures/f33_hour_weekday.png)
-
-</details>
-
-## Giới hạn cần trình bày
-
-Precision thấp và nhóm tiêu thụ cao còn yếu. Cụm origin chồng lấp không phải
-sự kiện thiết bị độc lập; lead của cụm ghép ngoại tuyến không chứng minh báo trước thiết bị bật.
-Wilson dựa trên giả định độc lập chưa hoàn toàn phù hợp; bootstrap theo khối chỉ khảo sát
-biến thiên trong giai đoạn đã có. Các tỷ lệ FP+r×FN là giả định, không phải tiền hoặc điện
-tiết kiệm. Chưa có can thiệp thật, công tơ chuẩn, biểu giá, hoặc nghiệm thu người dùng.
-Giám sát là batch ngoại tuyến; chưa kết nối thiết bị thật hay tự retrain.
-
-## Đối chiếu với báo cáo
-
-Báo cáo Master dùng phiên source
-[`8d6c1ba`](https://github.com/trangkhanh-ai/appliances-energy-prediction/tree/8d6c1ba0b5368426236a72f7d7240da90052410d).
-Bản dọn repo giữ nguyên chín tệp Python lõi, model, CSV và kết quả của phiên này;
-bổ sung công cụ kiểm tra, README và CI. Báo cáo và Master nội bộ được lưu riêng.
-
-## Nguồn tham khảo
-
-- [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction), DOI 10.24432/C5VC8G, CC BY 4.0.
-- [Dữ liệu và code R của tác giả](https://github.com/LuisM78/Appliances-energy-prediction-data).
-- Candanedo et al., Energy and Buildings, 2017, DOI 10.1016/j.enbuild.2017.01.083.
-- Lee, Industrial AI, 2020, DOI 10.1007/978-981-15-2144-7, Case Study 4.
-- [scikit-learn HGB](https://scikit-learn.org/1.9/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html).
-- [Conformalized Quantile Regression](https://arxiv.org/abs/1905.03222).
-- Künsch, 1989, DOI 10.1214/aos/1176347265: nền tảng bootstrap cho quan sát phụ thuộc.
-
-Giấy phép CC BY 4.0 áp dụng cho dữ liệu UCI. Repo chưa công bố giấy phép riêng
-cho mã nguồn.
+Dữ liệu: [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances-energy-prediction),
+DOI `10.24432/C5VC8G`, CC BY 4.0. Nghiên cứu gốc: Candanedo, Feldheim và Deramaix (2017),
+DOI `10.1016/j.enbuild.2017.01.083`. [Kho đối chiếu của tác giả](https://github.com/LuisM78/Appliances-energy-prediction-data).
+Word/PDF và tài liệu nội bộ nằm ngoài gói source công khai.

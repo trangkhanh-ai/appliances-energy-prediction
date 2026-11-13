@@ -27,3 +27,5 @@ jobs:
         run: python -m pip install -r requirements-lock.txt
       - name: Verify frozen results and replay in an isolated directory
         run: python tools/check_project.py
+      - name: Verify v2 models, tests, notebooks and replay
+        run: python -m v2.check

@@ -1,0 +1,352 @@
+{
+  "folds": {
+    "walk_A_march": {
+      "train": [
+        "2016-01-11 17:00",
+        "2016-03-01"
+      ],
+      "evaluation": [
+        "2016-03-01",
+        "2016-04-01"
+      ],
+      "threshold": 1780.0,
+      "train_n": 6948,
+      "eval_n": 4458,
+      "policy_calibration_n": 2226,
+      "policy_assessment_n": 2226,
+      "policy_split_time": "2016-03-16 12:00:00",
+      "margin": 10.816697613845093
+    },
+    "walk_B_april": {
+      "train": [
+        "2016-01-11 17:00",
+        "2016-04-01"
+      ],
+      "evaluation": [
+        "2016-04-01",
+        "2016-04-15"
+      ],
+      "threshold": 1720.0,
+      "train_n": 11412,
+      "eval_n": 2010,
+      "policy_calibration_n": 1002,
+      "policy_assessment_n": 1002,
+      "policy_split_time": "2016-04-08 00:00:00",
+      "margin": 9.191828512777306
+    }
+  },
+  "rows": [
+    {
+      "config": {
+        "name": "v1",
+        "method": "hgb_l1",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 167.9840455692556,
+        "rmse": 352.4524680985326,
+        "bias": -98.98167126916105,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 1311.1797358733872,
+        "high_rmse": 1408.056448079051,
+        "high_bias": -1310.8498985172077,
+        "high_underprediction_rate": 0.9939024390243902
+      },
+      "seconds": 1.9620099999883678,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "persistence",
+        "method": "persistence",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 242.5482279048901,
+        "rmse": 490.580542551753,
+        "bias": 0.03140421713772992,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 1250.7317073170732,
+        "high_rmse": 1401.4317591697984,
+        "high_bias": -680.1219512195122,
+        "high_underprediction_rate": 0.7560975609756098
+      },
+      "seconds": 0.00044920000073034316,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "ridge",
+        "method": "ridge",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 199.41534247451492,
+        "rmse": 341.334825199259,
+        "bias": 0.25165157438018493,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 1106.9497483472664,
+        "high_rmse": 1221.8694893136174,
+        "high_bias": -1096.690333616989,
+        "high_underprediction_rate": 0.975609756097561
+      },
+      "seconds": 0.015611599999829195,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "hgb_l2",
+        "method": "hgb_l2",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 192.50213688039224,
+        "rmse": 336.2079570861224,
+        "bias": 29.944324085257776,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 980.3555136633004,
+        "high_rmse": 1103.2186415753192,
+        "high_bias": -975.631382738869,
+        "high_underprediction_rate": 0.975609756097561
+      },
+      "seconds": 1.2763951000088127,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "xgb_l1",
+        "method": "xgb_l1",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 166.42857641508462,
+        "rmse": 343.5627836273139,
+        "bias": -88.52785997489153,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 1275.8233032226562,
+        "high_rmse": 1371.846709202857,
+        "high_bias": -1275.8233032226562,
+        "high_underprediction_rate": 1.0
+      },
+      "seconds": 2.17236930000945,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "rf",
+        "method": "rf",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_A_march",
+      "metrics": {
+        "n": 4458,
+        "mae": 187.25556359017676,
+        "rmse": 320.74395900626394,
+        "bias": 27.81725829587983,
+        "high_n": 164,
+        "high_episodes": 32,
+        "high_mae": 1014.7276193433235,
+        "high_rmse": 1120.0922911939663,
+        "high_bias": -1014.7276193433235,
+        "high_underprediction_rate": 1.0
+      },
+      "seconds": 2.7137975999939954,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "v1",
+        "method": "hgb_l1",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 162.00212173514223,
+        "rmse": 368.40866959066824,
+        "bias": -105.52445481713659,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 1223.972326608282,
+        "high_rmse": 1356.4531769681969,
+        "high_bias": -1220.739042255225,
+        "high_underprediction_rate": 0.990909090909091
+      },
+      "seconds": 2.3442015000036918,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "persistence",
+        "method": "persistence",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 218.50248756218906,
+        "rmse": 474.4555927088818,
+        "bias": 0.024875621890547265,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 1227.090909090909,
+        "high_rmse": 1435.9019971622524,
+        "high_bias": -394.90909090909093,
+        "high_underprediction_rate": 0.6727272727272727
+      },
+      "seconds": 0.00027010000485461205,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "ridge",
+        "method": "ridge",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 196.91032684872516,
+        "rmse": 349.13318383192524,
+        "bias": -3.4295437446435675,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 1025.031055398708,
+        "high_rmse": 1182.6014070390922,
+        "high_bias": -1003.3392947430295,
+        "high_underprediction_rate": 0.9272727272727272
+      },
+      "seconds": 0.013399399991612881,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "hgb_l2",
+        "method": "hgb_l2",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 181.62519289136776,
+        "rmse": 336.58675331468106,
+        "bias": 4.722123796756845,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 962.7996160887495,
+        "high_rmse": 1122.9461436199874,
+        "high_bias": -956.0312014128544,
+        "high_underprediction_rate": 0.9818181818181818
+      },
+      "seconds": 1.5181241999962367,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "xgb_l1",
+        "method": "xgb_l1",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 158.87397317459335,
+        "rmse": 357.402230188938,
+        "bias": -93.82394666529413,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 1174.9103584983131,
+        "high_rmse": 1313.4101005908017,
+        "high_bias": -1171.4476232355291,
+        "high_underprediction_rate": 0.990909090909091
+      },
+      "seconds": 2.0733016000012867,
+      "training": {}
+    },
+    {
+      "config": {
+        "name": "rf",
+        "method": "rf",
+        "features": "A",
+        "target": "multi",
+        "weight": 1,
+        "params": {},
+        "stage": "baseline"
+      },
+      "fold": "walk_B_april",
+      "metrics": {
+        "n": 2010,
+        "mae": 182.19239483766387,
+        "rmse": 329.3340850027261,
+        "bias": 12.023284109017933,
+        "high_n": 110,
+        "high_episodes": 15,
+        "high_mae": 948.8705488204943,
+        "high_rmse": 1096.5615663839271,
+        "high_bias": -943.932661295021,
+        "high_underprediction_rate": 0.9727272727272728
+      },
+      "seconds": 6.227213699996355,
+      "training": {}
+    }
+  ]
+}
